@@ -13,7 +13,7 @@ export interface IncidentItem {
   pillar: 'architecture' | 'messaging' | 'proof' | 'velocity';
   pillarName: string;
   severity: IncidentSeverity;
-  researchCitation?: string; // e.g. "Unbounce 40k Benchmark", "Baymard Institute UX Study"
+  researchCitation?: string;
   headline: string;
   plainEnglishImpact: string;
   actionableFix: string;
@@ -35,6 +35,9 @@ export interface RawTelemetryMetrics {
   domain: string;
   probeLatencyMs: number;
   statusCode: number;
+  archetype: 'PRODUCT_SOFTWARE' | 'AGENCY_SERVICE' | 'GENERAL_B2B';
+  hasInteractiveTool: boolean;
+  hasGithubRepo: boolean;
   h1Count: number;
   primaryH1: string;
   h1WordCount: number;

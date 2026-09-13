@@ -30,10 +30,13 @@ export async function scanUrl(rawInputUrl: string): Promise<RawTelemetryMetrics>
   // Total DOM nodes count
   const totalDomNodes = $('*').length;
 
-  // 1. H1 Analysis
+  // 1. H1 Analysis with <br> handling
   const h1Elements = $('h1');
   const h1Count = h1Elements.length;
-  const primaryH1 = h1Elements.first().text().trim().replace(/\s+/g, ' ') || '';
+  // Replace <br> tags with space so multi-line headlines don't concatenate words
+  const clonedH1 = h1Elements.first().clone();
+  clonedH1.find('br').replaceWith(' ');
+  const primaryH1 = clonedH1.text().trim().replace(/\s+/g, ' ') || '';
   const h1WordCount = primaryH1 ? primaryH1.split(/\s+/).length : 0;
 
   // 2. ICP Qualifying Hook in Subhead / Hero
@@ -61,52 +64,128 @@ export async function scanUrl(rawInputUrl: string): Promise<RawTelemetryMetrics>
   const matchedIcpKeywords = icpKeywordsList.filter((kw) => heroSubheads.includes(kw));
   const hasIcpHook = matchedIcpKeywords.length > 0;
 
-  // 3. CTA Buttons & Links
-  const ctaRegex = /(book|demo|start|try|get|schedule|claim|talk|join|contact|hire|sign up|audit|in touch)/i;
+  // 3. CTA Buttons & Links (expanded for SaaS utilities and scan tools)
+  const ctaRegex = /(book|demo|start|try|get|schedule|claim|talk|join|contact|hire|sign up|audit|scan|initiate|calculate|analyze|test|launch|explore|in touch)/i;
   let ctaCount = 0;
   let primaryCtaText = '';
 
   $('a, button, input[type="submit"]').each((_, el) => {
     const text = $(el).text().trim();
     const ariaLabel = $(el).attr('aria-label') || '';
-    const combined = `${text} ${ariaLabel}`;
+    const val = $(el).attr('value') || '';
+    const combined = `${text} ${ariaLabel} ${val}`;
     if (ctaRegex.test(combined)) {
       ctaCount++;
-      if (!primaryCtaText && text) {
-        primaryCtaText = text.replace(/\s+/g, ' ').slice(0, 30);
+      if (!primaryCtaText && (text || val)) {
+        primaryCtaText = (text || val).replace(/\s+/g, ' ').slice(0, 30);
       }
     }
   });
 
-  // 4. Header Navigation: Only count TOP-LEVEL menu links (ignore dropdown mega-menus)
+  // 4. Header Navigation: Filter out logo links and CTA buttons, counting only true navigation menu items
   let topLevelNavCount = 0;
-  const topNavLinks = $('header > nav > a, header nav > ul > li > a, header > div > nav > a, header > div > div > a');
+  const headerLinks = $('header a, nav a, [role="banner"] a, .site-header a, .navbar a');
 
-  if (topNavLinks.length > 0) {
-    topLevelNavCount = topNavLinks.length;
+  const filteredNavLinks = headerLinks.filter((_, el) => {
+    const $el = $(el);
+    const href = $el.attr('href') || '';
+    const text = $el.text().trim();
+    const className = ($el.attr('class') || '') + ' ' + ($el.parent().attr('class') || '');
+    const ariaLabel = $el.attr('aria-label') || '';
+
+    // Ignore logo / home branding link
+    const isLogo =
+      /logo|brand/i.test(className) ||
+      /logo/i.test(ariaLabel) ||
+      ((href === '/' || href === '') && $el.find('svg, img').length > 0);
+    if (isLogo) return false;
+
+    // Ignore CTA action buttons located in header
+    const isCtaButton =
+      /btn|cta|button/i.test(className) ||
+      ctaRegex.test(text);
+    if (isCtaButton) return false;
+
+    // Ignore hidden dropdown sub-items
+    const parent = $el.parents();
+    const isSubDropdown = parent.is('[class*="dropdown" i], [class*="submenu" i]');
+    if (isSubDropdown) return false;
+
+    // Must have readable text or title
+    return text.length > 0;
+  });
+
+  if (filteredNavLinks.length > 0) {
+    // Unique by text content
+    const uniqueLinkTexts = new Set(filteredNavLinks.map((_, el) => $(el).text().trim().toLowerCase()).get());
+    topLevelNavCount = uniqueLinkTexts.size;
   } else {
-    const directHeaderLinks = $('header a').filter((_, el) => {
-      const parent = $(el).parents();
-      const isDropdown = parent.is('[class*="dropdown" i], [class*="grid" i], [class*="menu" i] [class*="menu" i]');
-      return !isDropdown;
-    });
-    topLevelNavCount = Math.max(1, Math.min(directHeaderLinks.length, 8));
+    // If no header links found, check fallback navigation items
+    topLevelNavCount = 0;
   }
 
-  // 5. Form Input Count
+  // 5. Form Input Count & Interactive Tool Detection
   const formInputs = $(
     'form input:not([type="hidden"]):not([type="submit"]):not([type="checkbox"]), form select, form textarea'
   );
   const formInputCount = formInputs.length;
 
-  // 6. Persistent Navigation
-  const headerHtml = $('header, nav').prop('outerHTML') || '';
-  const hasPersistentNav =
+  const hasInteractiveTool =
+    $('input[type="text"], input[type="url"], input[type="search"]').length > 0 &&
+    /(scan|audit|search|calculate|check|generate|analyze|test)/i.test($('button, form').text());
+
+  const hasGithubRepo = $('a[href*="github.com"]').length > 0;
+
+  // Archetype classification
+  const pageAllText = $('body').text().toLowerCase();
+  let archetype: 'PRODUCT_SOFTWARE' | 'AGENCY_SERVICE' | 'GENERAL_B2B' = 'GENERAL_B2B';
+
+  if (/(services|case-studies|portfolio|our work|hire us|client results)/i.test(pageAllText)) {
+    archetype = 'AGENCY_SERVICE';
+  } else if (hasInteractiveTool || hasGithubRepo || /(api|docs|pricing|sign up|dashboard|app|extension)/i.test(pageAllText)) {
+    archetype = 'PRODUCT_SOFTWARE';
+  }
+
+  // 6. Persistent Navigation (Check classes, inline styles, embedded styles, and same-origin stylesheets)
+  const headerHtml = $('header, nav, [role="banner"], .site-header, .navbar').prop('outerHTML') || '';
+  const inlineStyles = $('header, nav, [role="banner"], .site-header, .navbar').attr('style') || '';
+  let embeddedStyles = $('style').text();
+
+  // Inspect up to 2 same-origin stylesheets for sticky/fixed header rules
+  const stylesheets = $('link[rel="stylesheet"]')
+    .map((_, el) => $(el).attr('href'))
+    .get()
+    .filter((h): h is string => Boolean(h && (!h.startsWith('http') || h.startsWith(parsedUrl.origin))))
+    .slice(0, 2);
+
+  for (const sheetHref of stylesheets) {
+    try {
+      const fullSheetUrl = new URL(sheetHref, parsedUrl.origin).toString();
+      const cssRes = await fetch(fullSheetUrl, { signal: AbortSignal.timeout(1200) });
+      const cssText = await cssRes.text();
+      embeddedStyles += ' ' + cssText;
+    } catch {
+      // Non-critical stylesheet fetch timeout
+    }
+  }
+
+  let hasPersistentNav =
     /fixed|sticky/i.test(headerHtml) ||
-    /position:\s*(fixed|sticky)/i.test($('header, nav').attr('style') || '');
+    /position:\s*(fixed|sticky)/i.test(inlineStyles) ||
+    /(site-header|navbar|header|nav)\s*\{[^}]*position:\s*(fixed|sticky)/i.test(embeddedStyles) ||
+    /fixed|sticky|backdrop-blur|top-0/i.test(headerHtml);
 
   // 7. Text analysis for Readability & Buzzwords
-  const pageBodyText = $('body').text().replace(/\s+/g, ' ').trim();
+  // Clone body and remove non-content elements (scripts, styles, SVGs, code, pre, noscript)
+  const contentBody = $('body').clone();
+  contentBody.find('script, style, svg, noscript, iframe, code, pre').remove();
+
+  // Add block boundary spacing so lists, headings, and paragraphs are evaluated with proper sentence cadence
+  contentBody.find('p, li, h1, h2, h3, h4, h5, h6, dt, dd, td, th, blockquote, br').each((_, el) => {
+    $(el).append('. ');
+  });
+
+  const pageBodyText = contentBody.text().replace(/\s+/g, ' ').trim();
   const readability = calculateReadability(pageBodyText);
   const buzzwords = detectBuzzwords(pageBodyText);
 
@@ -114,8 +193,6 @@ export async function scanUrl(rawInputUrl: string): Promise<RawTelemetryMetrics>
   const metricRegex = /(\$[0-9]+(\.[0-9]+)?([kmbKMB])?|\b[0-9]+(\.[0-9]+)?%|\b[0-9]+(\.[0-9]+)?x\b|\b[0-9]{2,}\+)/g;
   const rawMetricMatches = pageBodyText.match(metricRegex) || [];
   const uniqueMetrics = Array.from(new Set(rawMetricMatches)).slice(0, 6);
-
-  // CXL Research: Check for odd / specific numbers (e.g. 14.2%, $312,400)
   const hasSpecificNumbers = uniqueMetrics.some((m) => /\.[0-9]|,[0-9]{3}/.test(m));
 
   // 9. Client Logos, Partner Badges & Portfolio Assets
@@ -199,6 +276,9 @@ export async function scanUrl(rawInputUrl: string): Promise<RawTelemetryMetrics>
     domain,
     probeLatencyMs,
     statusCode: response.status,
+    archetype,
+    hasInteractiveTool,
+    hasGithubRepo,
     h1Count,
     primaryH1,
     h1WordCount,

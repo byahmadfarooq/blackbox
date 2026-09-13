@@ -78,9 +78,13 @@ export function ShareBar({ domain, score, tierLabel }: ShareBarProps) {
   </svg>
 </a>`;
 
+  const badgeTypeParam = badgeType === 'CIRCULAR' ? 'circular' : 'pill';
+  const badgeImageUrl = `https://blackbox-kaivex.vercel.app/api/badge?score=${score}&type=${badgeTypeParam}`;
+
   const activeCode = badgeType === 'CIRCULAR' ? circularSvgCode : horizontalSvgCode;
-  const markdownCode = `[![Blackbox Telemetry Badge](${shareUrl})](${shareUrl})`;
-  const codeToCopy = codeFormat === 'HTML' ? activeCode : markdownCode;
+  const markdownCode = `[![Blackbox Telemetry Badge (${score}/100)](${badgeImageUrl})](${shareUrl})`;
+  const htmlEmbedCode = `<a href="${shareUrl}" target="_blank" rel="noopener noreferrer"><img src="${badgeImageUrl}" alt="Blackbox Telemetry Seal - ${score}/100" /></a>`;
+  const codeToCopy = codeFormat === 'HTML' ? htmlEmbedCode : markdownCode;
 
   const copyBadgeSnippet = async () => {
     try {

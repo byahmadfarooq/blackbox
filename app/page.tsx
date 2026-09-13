@@ -10,8 +10,18 @@ import { KaivexBanner } from '@/components/KaivexBanner';
 import { ShareBar } from '@/components/ShareBar';
 import { TelemetryResult } from '@/lib/engine/types';
 
-function FlightDeckContent() {
+function UrlQueryListener({ onTargetUrl }: { onTargetUrl: (url: string) => void }) {
   const searchParams = useSearchParams();
+  useEffect(() => {
+    const queryUrl = searchParams.get('url');
+    if (queryUrl) {
+      onTargetUrl(queryUrl);
+    }
+  }, [searchParams, onTargetUrl]);
+  return null;
+}
+
+export default function Home() {
   const [urlInput, setUrlInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
@@ -28,14 +38,12 @@ function FlightDeckContent() {
     'FINALIZING FLIGHT TELEMETRY & INCIDENT MANIFEST...',
   ];
 
-  // Auto-scan if ?url= is passed in search params
-  useEffect(() => {
-    const queryUrl = searchParams.get('url');
-    if (queryUrl && !report && !loading) {
-      setUrlInput(queryUrl);
-      executeScan(queryUrl);
+  const handleAutoScan = React.useCallback((targetUrl: string) => {
+    if (targetUrl && !report && !loading) {
+      setUrlInput(targetUrl);
+      executeScan(targetUrl);
     }
-  }, [searchParams]);
+  }, [report, loading]);
 
   // Loading animation stepper
   useEffect(() => {
@@ -96,6 +104,10 @@ function FlightDeckContent() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
+      <Suspense fallback={null}>
+        <UrlQueryListener onTargetUrl={handleAutoScan} />
+      </Suspense>
+
       <Header onReset={resetFlightDeck} />
 
       {/* SCREEN 1: THE FLIGHT DECK (HOMEPAGE / INPUT) */}
@@ -272,10 +284,3 @@ function FlightDeckContent() {
   );
 }
 
-export default function Home() {
-  return (
-    <Suspense fallback={<div className="p-12 text-center font-mono text-xs text-[#71717A]">LOADING FLIGHT DECK...</div>}>
-      <FlightDeckContent />
-    </Suspense>
-  );
-}

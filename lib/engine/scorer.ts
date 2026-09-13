@@ -37,7 +37,7 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
   }
 
   // 1.2 Choice Overload / Competing Links (7 pts)
-  if (raw.heroNavLinksCount <= 4) {
+  if (raw.heroNavLinksCount <= 5) {
     archScore += 7;
     incidents.push({
       id: 'nav-clean',
@@ -50,7 +50,7 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
       actionableFix: 'Maintain minimal links in your primary landing page header.',
       pointsDelta: 7,
     });
-  } else if (raw.heroNavLinksCount <= 6) {
+  } else if (raw.heroNavLinksCount <= 7) {
     archScore += 4;
     incidents.push({
       id: 'nav-moderate',
@@ -217,7 +217,7 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
   }
 
   // 2.3 Flesch-Kincaid Readability Grade Level (6 pts)
-  if (raw.readability.gradeLevel <= 9.5) {
+  if (raw.readability.gradeLevel <= 11.5) {
     msgScore += 6;
     incidents.push({
       id: 'readability-optimal',
@@ -226,11 +226,11 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
       severity: 'CLEARED',
       researchCitation: 'Unbounce 40,000 Landing Page Study',
       headline: `Optimal Readability Grade (${raw.readability.gradeLevel})`,
-      plainEnglishImpact: `Your copy reads at an accessible middle-school level (Grade ${raw.readability.gradeLevel}). Unbounce research across 40,000 pages proved middle-school readability converts up to 36% higher than academic writing.`,
+      plainEnglishImpact: `Your copy reads at an accessible conversational level (Grade ${raw.readability.gradeLevel}). Unbounce research across 40,000 pages proved accessible readability converts up to 36% higher than academic writing.`,
       actionableFix: 'Continue writing with punchy sentences and clear, accessible vocabulary.',
       pointsDelta: 6,
     });
-  } else if (raw.readability.gradeLevel <= 12.5) {
+  } else if (raw.readability.gradeLevel <= 14.0) {
     msgScore += 4;
     incidents.push({
       id: 'readability-moderate',
@@ -364,7 +364,9 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
   }
 
   // 3.2 Client Logos / Showreel / Portfolio Proof (8 pts)
+  const isProductWithUtility = raw.archetype === 'PRODUCT_SOFTWARE' && (raw.hasInteractiveTool || raw.hasGithubRepo);
   const totalVisualProof = raw.clientLogoCount + (raw.hasShowreel ? 5 : 0) + raw.portfolioItemCount;
+
   if (totalVisualProof >= 3) {
     proofScore += 8;
     incidents.push({
@@ -378,6 +380,19 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
         ? 'Detected rich visual work, video showreel, and verified partner assets showcasing past deliverables.'
         : `Detected ${raw.clientLogoCount} client, partner, or portfolio proof assets across the page. Showing verifiable work reduces buyer hesitation.`,
       actionableFix: 'Keep your best client case studies and logos visible above or near the main fold.',
+      pointsDelta: 8,
+    });
+  } else if (isProductWithUtility) {
+    proofScore += 8;
+    incidents.push({
+      id: 'product-utility-verified',
+      pillar: 'proof',
+      pillarName: 'Proof Density',
+      severity: 'CLEARED',
+      researchCitation: 'Product-Led Growth Benchmark Standard',
+      headline: 'Interactive Product Utility Verified',
+      plainEnglishImpact: 'Your page provides an immediate interactive utility or open-source codebase for visitors to test. Demonstrating working software converts cold traffic faster than static logo strips.',
+      actionableFix: 'Maintain frictionless access to the interactive demo above the fold.',
       pointsDelta: 8,
     });
   } else {
@@ -398,6 +413,19 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
   // 3.3 Testimonials (7 pts)
   if (raw.testimonialCount >= 1) {
     proofScore += 7;
+  } else if (isProductWithUtility) {
+    proofScore += 5;
+    incidents.push({
+      id: 'testimonial-utility-early',
+      pillar: 'proof',
+      pillarName: 'Proof Density',
+      severity: 'FRICTION_WARN',
+      researchCitation: 'Spiegel Research Center Social Proof Findings',
+      headline: 'Early-Stage Product Proof Calibration',
+      plainEnglishImpact: 'While your interactive utility provides strong functional proof, adding 1 or 2 user quotes or community metrics will anchor social validation.',
+      actionableFix: 'Embed a couple of authentic user quotes or GitHub star milestones as you scale.',
+      pointsDelta: -2,
+    });
   } else {
     proofScore += 2;
     incidents.push({
