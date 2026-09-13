@@ -15,11 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BLACKBOX // B2B Funnel Flight Recorder",
   description: "Instant, deterministic conversion friction telemetry for B2B landing pages. Detect hidden conversion stalls, tracking bloat, and messaging drag in 3.5 seconds.",
-  metadataBase: new URL("https://blackbox.kaivex.vercel.app"),
+  metadataBase: new URL("https://blackbox-kaivex.vercel.app"),
   openGraph: {
     title: "BLACKBOX // B2B Funnel Flight Recorder",
     description: "What went wrong before the lead bounced? Run instant, mathematical conversion friction telemetry on any B2B landing page.",
-    url: "https://blackbox.kaivex.vercel.app",
+    url: "https://blackbox-kaivex.vercel.app",
     siteName: "Blackbox by Kaivex Systems",
     type: "website",
   },

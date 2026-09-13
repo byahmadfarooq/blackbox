@@ -124,7 +124,7 @@ export async function GET(req: NextRequest) {
           {/* Bottom Bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '14px', color: '#52525B', fontFamily: 'monospace' }}>
-              RECOVER YOUR CONVERSION FLIGHT DATA: blackbox.kaivex.vercel.app
+              RECOVER YOUR CONVERSION FLIGHT DATA: blackbox-kaivex.vercel.app
             </span>
             <span style={{ fontSize: '14px', color: '#FF5500', fontFamily: 'monospace', fontWeight: 700 }}>
               CONVERSION ARCHITECTURE BY KAIVEX SYSTEMS

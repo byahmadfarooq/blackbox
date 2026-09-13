@@ -266,7 +266,7 @@ function FlightDeckContent() {
       <footer className="mt-16 pt-6 border-t border-[#1C1C20] flex flex-col sm:flex-row justify-between items-center gap-3 font-mono text-[11px] text-[#52525B]">
         <div>BLACKBOX TELEMETRY ENGINE // BUILT BY KAIVEX SYSTEMS</div>
         <div>100% DETERMINISTIC HEURISTICS // ZERO AI TOKENS SPENT</div>
-        <div>HOSTED AT BLACKBOX.KAIVEX.VERCEL.APP</div>
+        <div>HOSTED AT BLACKBOX-KAIVEX.VERCEL.APP</div>
       </footer>
     </div>
   );

@@ -14,7 +14,7 @@ export function ShareBar({ domain, score, tierLabel }: ShareBarProps) {
   const [codeFormat, setCodeFormat] = useState<'HTML' | 'MARKDOWN'>('HTML');
   const [badgeCopied, setBadgeCopied] = useState(false);
 
-  const shareUrl = `https://blackbox.kaivex.vercel.app/?url=${encodeURIComponent(domain)}`;
+  const shareUrl = `https://blackbox-kaivex.vercel.app/?url=${encodeURIComponent(domain)}`;
 
   const tierColor = score >= 90 ? '#00FF88' : score >= 75 ? '#FFB700' : '#FF5500';
   const tierShort = score >= 90 ? 'TIER S // OPTIMAL' : score >= 75 ? 'TIER A // VERIFIED' : 'TIER B // DRAG';
@@ -140,7 +140,7 @@ ${shareUrl}`;
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 py-4 px-2 border-t border-[#1C1C24] my-4 font-mono text-xs text-[#71717A]">
         <div className="flex items-center gap-2">
           <span className="text-[#52525B]">PERMALINK:</span>
-          <span className="text-[#E4E4E7] select-all">blackbox.kaivex.vercel.app/?url={domain}</span>
+          <span className="text-[#E4E4E7] select-all">blackbox-kaivex.vercel.app/?url={domain}</span>
         </div>
 
         <div className="flex flex-wrap gap-2">
