@@ -387,7 +387,7 @@ export async function scanUrl(rawInputUrl: string, manualArchetype?: PageArchety
   const calibrationConfigs: Record<PageArchetype, { label: string; benchmarkStandard: string; description: string }> = {
     AGENCY_STUDIO: {
       label: 'AGENCY & STUDIO HUB',
-      benchmarkStandard: "Miller's Law (7±2) & NN/g B2B Service Hierarchy",
+      benchmarkStandard: "Miller's Cognitive Chunking Law (7 +/- 2) & NN/g B2B Service Hierarchy",
       description: 'Calibrated for multi-service consultative agencies. Evaluates work portfolios, showreels, client outcomes, and consultative booking paths.',
     },
     PERSONAL_AUTHORITY: {
