@@ -6,7 +6,7 @@ interface HeaderProps {
 
 export function Header({ onReset }: HeaderProps) {
   return (
-    <header className="flex justify-between items-center pb-5 border-b border-[#1C1C20] mb-6">
+    <header className="sticky top-0 z-40 bg-[#050505]/90 backdrop-blur-md flex justify-between items-center pb-4 pt-3 border-b border-[#1C1C20] mb-6">
       <div 
         onClick={onReset} 
         className="flex items-center gap-3.5 cursor-pointer select-none group"

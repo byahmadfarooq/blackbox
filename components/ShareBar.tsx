@@ -156,98 +156,101 @@ ${shareUrl}`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`, '_blank');
   };
 
-  // 1. AEROSPACE FLIGHT SEAL (140x140)
+  // 1. AEROSPACE FLIGHT SEAL (150x150) - Precision Dial with Curved Radial Telemetry
+  const circumference = 395.84;
+  const activeArc = ((score / 100) * circumference).toFixed(1);
+
   const circularSvgCode = `<a href="${shareUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;text-decoration:none;">
-  <svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140" fill="none">
+  <svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150" fill="none">
     <defs>
-      <radialGradient id="sealGrad" cx="50%" cy="40%" r="60%">
-        <stop offset="0%" stop-color="#12121B" />
-        <stop offset="70%" stop-color="#08080C" />
-        <stop offset="100%" stop-color="#030305" />
+      <radialGradient id="dialGrad" cx="50%" cy="38%" r="62%">
+        <stop offset="0%" stop-color="#14141E" />
+        <stop offset="65%" stop-color="#08080C" />
+        <stop offset="100%" stop-color="#020204" />
       </radialGradient>
-      <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#3F3F50" />
-        <stop offset="50%" stop-color="#1C1C24" />
-        <stop offset="100%" stop-color="#2E2E3C" />
+      <linearGradient id="ringStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#3A3A4C" />
+        <stop offset="50%" stop-color="#161622" />
+        <stop offset="100%" stop-color="#2D2D3E" />
       </linearGradient>
-      <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-        <feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="${tierColor}" flood-opacity="0.5" />
+      <filter id="arcGlow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="${tierColor}" flood-opacity="0.65" />
       </filter>
     </defs>
-    <circle cx="70" cy="70" r="67" fill="url(#sealGrad)" stroke="url(#ringGrad)" stroke-width="1.8" />
-    <circle cx="70" cy="70" r="62" fill="none" stroke="#161620" stroke-width="1" />
-    <g stroke="#3A3A4A" stroke-width="1" opacity="0.7">
-      <line x1="70" y1="9" x2="70" y2="13" />
-      <line x1="70" y1="127" x2="70" y2="131" />
-      <line x1="9" y1="70" x2="13" y2="70" />
-      <line x1="127" y1="70" x2="131" y2="70" />
-      <line x1="27" y1="27" x2="30" y2="30" />
-      <line x1="113" y1="27" x2="110" y2="30" />
-      <line x1="27" y1="113" x2="30" y2="110" />
-      <line x1="113" y1="113" x2="110" y2="110" />
-    </g>
-    <line x1="70" y1="8" x2="70" y2="14" stroke="#FF5500" stroke-width="1.8" />
-    <line x1="70" y1="126" x2="70" y2="132" stroke="#FF5500" stroke-width="1.8" />
-    <circle cx="70" cy="70" r="48" fill="none" stroke="#14141E" stroke-width="2.5" stroke-dasharray="226.2 75.4" stroke-dashoffset="-37.7" stroke-linecap="round" />
-    <circle cx="70" cy="70" r="48" fill="none" stroke="${tierColor}" stroke-width="2.5" stroke-dasharray="${activeArcLength} 301.6" stroke-dashoffset="-37.7" stroke-linecap="round" filter="url(#neonGlow)" />
-    <g transform="translate(70, 31) scale(0.6)">
+    <circle cx="75" cy="75" r="72" fill="url(#dialGrad)" stroke="url(#ringStroke)" stroke-width="2" />
+    <circle cx="75" cy="75" r="63" fill="none" stroke="#12121A" stroke-width="4" />
+    <circle cx="75" cy="75" r="63" fill="none" stroke="${tierColor}" stroke-width="4" stroke-dasharray="${activeArc} 395.84" stroke-linecap="round" transform="rotate(-90 75 75)" filter="url(#arcGlow)" />
+    <circle cx="75" cy="75" r="54" fill="#06060A" stroke="#181824" stroke-width="1.2" />
+    <g transform="translate(75, 36) scale(0.55)">
       <polygon points="0,-10 9,-5 0,0 -9,-5" stroke="#FF5500" stroke-width="1.8" fill="#FF550025"/>
       <polygon points="-9,-5 0,0 0,10 -9,5" stroke="#FF5500" stroke-width="1.8" fill="#FF550015"/>
       <polygon points="9,-5 0,0 0,10 9,5" stroke="#FF5500" stroke-width="1.8" fill="#FF550035"/>
     </g>
-    <text x="70" y="65" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="900" fill="#FFFFFF" letter-spacing="-0.03em">${score}</text>
-    <text x="70" y="77" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="8" font-weight="700" fill="#71717A" letter-spacing="0.12em">/ 100 SCORE</text>
-    <rect x="33" y="85" width="74" height="17" rx="3.5" fill="${tierColor}18" stroke="${tierColor}" stroke-width="1" />
-    <text x="70" y="96.5" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="7.5" font-weight="800" fill="${tierColor}" letter-spacing="0.08em">${tierShort}</text>
-    <text x="70" y="117" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="6.5" font-weight="700" fill="#52525B" letter-spacing="0.16em">KAIVEX SYSTEMS</text>
+    <text x="75" y="49" text-anchor="middle" font-family="ui-monospace, monospace" font-size="7" font-weight="900" fill="#A1A1AA" letter-spacing="0.16em">BLACKBOX VERIFIED</text>
+    <text x="75" y="74" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="30" font-weight="900" fill="#FFFFFF" letter-spacing="-0.03em">${score}</text>
+    <text x="75" y="85" text-anchor="middle" font-family="ui-monospace, monospace" font-size="7.5" font-weight="700" fill="#71717A" letter-spacing="0.1em">/ 100 SCORE</text>
+    <rect x="33" y="93" width="84" height="16" rx="3.5" fill="${tierColor}18" stroke="${tierColor}" stroke-width="1.1" />
+    <text x="75" y="104.5" text-anchor="middle" font-family="ui-monospace, monospace" font-size="7.5" font-weight="900" fill="${tierColor}" letter-spacing="0.06em">${tierShort}</text>
+    <text x="75" y="120" text-anchor="middle" font-family="ui-monospace, monospace" font-size="6.5" font-weight="700" fill="#52525B" letter-spacing="0.18em">KAIVEX SYSTEMS</text>
   </svg>
 </a>`;
 
-  // 2. TACTICAL FLIGHT CAPSULE (240x36)
+  // 2. TACTICAL DUAL-COMPARTMENT CAPSULE (290x38)
   const horizontalSvgCode = `<a href="${shareUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;text-decoration:none;">
-  <svg xmlns="http://www.w3.org/2000/svg" width="240" height="36" viewBox="0 0 240 36" fill="none">
+  <svg xmlns="http://www.w3.org/2000/svg" width="290" height="38" viewBox="0 0 290 38" fill="none">
     <defs>
-      <linearGradient id="capBg" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#0E0E14" />
-        <stop offset="100%" stop-color="#060608" />
-      </linearGradient>
-      <linearGradient id="capBorder" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="#2D2D3C" />
+      <linearGradient id="capBorderShare" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#3A3A4C" />
         <stop offset="50%" stop-color="#181822" />
         <stop offset="100%" stop-color="#2D2D3C" />
       </linearGradient>
+      <linearGradient id="capBgLShare" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#121218" />
+        <stop offset="100%" stop-color="#09090D" />
+      </linearGradient>
     </defs>
-    <rect width="240" height="36" rx="6" fill="url(#capBg)" stroke="url(#capBorder)" stroke-width="1.2" />
-    <g transform="translate(16, 18) scale(0.6)">
+    <rect width="290" height="38" rx="6" fill="#060609" stroke="url(#capBorderShare)" stroke-width="1.2" />
+    <path d="M 0 6 Q 0 0 6 0 L 152 0 L 152 38 L 6 38 Q 0 38 0 32 Z" fill="url(#capBgLShare)" />
+    <g transform="translate(15, 19) scale(0.6)">
       <polygon points="0,-10 9,-5 0,0 -9,-5" stroke="#FF5500" stroke-width="1.8" fill="#FF550025"/>
       <polygon points="-9,-5 0,0 0,10 -9,5" stroke="#FF5500" stroke-width="1.8" fill="#FF550015"/>
       <polygon points="9,-5 0,0 0,10 9,5" stroke="#FF5500" stroke-width="1.8" fill="#FF550035"/>
     </g>
-    <text x="32" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="900" fill="#FFFFFF" letter-spacing="0.06em">BLACKBOX</text>
-    <text x="96" y="21.5" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="8" font-weight="700" fill="#71717A" letter-spacing="0.08em">VERIFIED</text>
-    <line x1="150" y1="8" x2="150" y2="28" stroke="#1F1F2B" stroke-width="1.2" />
-    <circle cx="166" cy="18" r="3" fill="${tierColor}" />
-    <text x="176" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${score}</text>
-    <text x="193" y="21.5" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="8.5" font-weight="600" fill="#52525B">/100</text>
-    <rect x="212" y="9.5" width="18" height="17" rx="3" fill="${tierColor}18" stroke="${tierColor}" stroke-width="1"/>
-    <text x="221" y="21.5" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="8.5" font-weight="900" fill="${tierColor}">${tierLetter}</text>
+    <text x="33" y="23.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="900" fill="#FFFFFF" letter-spacing="0.06em">
+      BLACKBOX <tspan font-family="ui-monospace, monospace" font-size="7.5" font-weight="800" fill="#A1A1AA" letter-spacing="0.08em" dx="4">VERIFIED</tspan>
+    </text>
+    <line x1="152" y1="0" x2="152" y2="38" stroke="#1E1E2A" stroke-width="1.2" />
+    <circle cx="168" cy="19" r="3" fill="${tierColor}" />
+    <text x="178" y="23.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">
+      ${score}<tspan font-family="ui-monospace, monospace" font-size="8.5" font-weight="600" fill="#71717A" dx="3">/100</tspan>
+    </text>
+    <rect x="232" y="9.5" width="48" height="19" rx="3.5" fill="${tierColor}18" stroke="${tierColor}" stroke-width="1"/>
+    <text x="256" y="22.5" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8.5" font-weight="900" fill="${tierColor}" letter-spacing="0.04em">TIER ${tierLetter}</text>
   </svg>
 </a>`;
 
-  // 3. COCKPIT FLIGHT PLATE (220x68)
+  // 3. COCKPIT FLIGHT PLAQUE (260x76 HUD)
   const hudPlateSvgCode = `<a href="${shareUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;text-decoration:none;">
-  <svg xmlns="http://www.w3.org/2000/svg" width="220" height="68" viewBox="0 0 220 68" fill="none">
-    <rect width="220" height="68" rx="6" fill="#07070B" stroke="#1E1E2A" stroke-width="1.2"/>
-    <path d="M 1 9 L 1 1 L 9 1" stroke="#FF5500" stroke-width="1.5" fill="none"/>
-    <path d="M 219 9 L 219 1 L 211 1" stroke="#FF5500" stroke-width="1.5" fill="none"/>
-    <path d="M 1 59 L 1 67 L 9 67" stroke="#FF5500" stroke-width="1.5" fill="none"/>
-    <path d="M 219 59 L 219 67 L 211 67" stroke="#FF5500" stroke-width="1.5" fill="none"/>
-    <text x="16" y="20" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="7.5" font-weight="800" fill="#71717A" letter-spacing="0.14em">BLACKBOX // FLIGHT TELEMETRY</text>
-    <circle cx="198" cy="17" r="3" fill="${tierColor}" />
-    <text x="16" y="49" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="26" font-weight="900" fill="#FFFFFF" letter-spacing="-0.03em">${score}</text>
-    <text x="53" y="47.5" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="9" font-weight="700" fill="#52525B">/ 100</text>
-    <rect x="96" y="32" width="108" height="20" rx="3.5" fill="${tierColor}18" stroke="${tierColor}" stroke-width="1"/>
-    <text x="150" y="45.5" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="8" font-weight="800" fill="${tierColor}" letter-spacing="0.06em">${tierShort}</text>
+  <svg xmlns="http://www.w3.org/2000/svg" width="260" height="76" viewBox="0 0 260 76" fill="none">
+    <rect width="260" height="76" rx="8" fill="#08080C" stroke="#1E1E2A" stroke-width="1.2" />
+    <path d="M 2 12 L 2 2 L 12 2" stroke="#FF5500" stroke-width="1.8" fill="none" />
+    <path d="M 258 12 L 258 2 L 248 2" stroke="#FF5500" stroke-width="1.8" fill="none" />
+    <path d="M 2 64 L 2 74 L 12 74" stroke="#FF5500" stroke-width="1.8" fill="none" />
+    <path d="M 258 64 L 258 74 L 248 74" stroke="#FF5500" stroke-width="1.8" fill="none" />
+    <g transform="translate(18, 19) scale(0.55)">
+      <polygon points="0,-10 9,-5 0,0 -9,-5" stroke="#FF5500" stroke-width="1.8" fill="#FF550025"/>
+      <polygon points="-9,-5 0,0 0,10 -9,5" stroke="#FF5500" stroke-width="1.8" fill="#FF550015"/>
+      <polygon points="9,-5 0,0 0,10 9,5" stroke="#FF5500" stroke-width="1.8" fill="#FF550035"/>
+    </g>
+    <text x="32" y="21" font-family="ui-monospace, monospace" font-size="8" font-weight="900" fill="#A1A1AA" letter-spacing="0.14em">BLACKBOX // FLIGHT TELEMETRY</text>
+    <circle cx="242" cy="18" r="3.5" fill="${tierColor}" />
+    <text x="18" y="53" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="900" fill="#FFFFFF" letter-spacing="-0.03em">
+      ${score}<tspan font-family="ui-monospace, monospace" font-size="10" font-weight="700" fill="#71717A" dx="4">/ 100</tspan>
+    </text>
+    <rect x="124" y="34" width="118" height="23" rx="4" fill="${tierColor}18" stroke="${tierColor}" stroke-width="1.2" />
+    <text x="183" y="49.5" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8.5" font-weight="900" fill="${tierColor}" letter-spacing="0.08em">${tierShort}</text>
+    <line x1="18" y1="64" x2="242" y2="64" stroke="#181822" stroke-width="1" />
+    <text x="18" y="70.5" font-family="ui-monospace, monospace" font-size="6.5" font-weight="700" fill="#52525B" letter-spacing="0.14em">VERIFIED CONVERSION ARCHITECTURE // KAIVEX</text>
   </svg>
 </a>`;
 

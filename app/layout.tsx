@@ -21,12 +21,21 @@ export const metadata: Metadata = {
     description: "What went wrong before the lead bounced? Run instant, mathematical conversion friction telemetry on any B2B landing page.",
     url: "https://blackbox-kaivex.vercel.app",
     siteName: "Blackbox by Kaivex Systems",
+    images: [
+      {
+        url: "https://blackbox-kaivex.vercel.app/api/og?url=blackbox-kaivex.vercel.app&score=100&tier=TIER_S_OPTIMAL",
+        width: 1200,
+        height: 630,
+        alt: "Blackbox Conversion Flight Recorder",
+      },
+    ],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "BLACKBOX // B2B Funnel Flight Recorder",
     description: "What went wrong before the lead bounced? Instant B2B landing page friction telemetry.",
+    images: ["https://blackbox-kaivex.vercel.app/api/og?url=blackbox-kaivex.vercel.app&score=100&tier=TIER_S_OPTIMAL"],
   },
 };
 
