@@ -278,31 +278,36 @@ export async function scanUrl(rawInputUrl: string, manualArchetype?: PageArchety
   let saasScore = 0;
   let funnelScore = 0;
 
-  // Personal Authority indicators
-  const hasPersonalBio =
-    $('img[src*="profile" i], img[src*="avatar" i], [class*="bio" i], [class*="author" i], .nav-logo-text').length > 0 ||
-    /i am|i build|i help|about me|solo founder|solo builder|full-stack builder|consultant|strategist/i.test(fullCorpus);
+  const hasSubstack = $('a[href*="substack.com"], a[href*="medium.com"]').length > 0;
 
-  if (/(i build|i help|about me|my work|solo builder|solo founder|full-stack builder|strategist|engineer & designer|behind the build|my projects)/i.test(fullCorpus)) {
-    personalScore += 5;
+  // Personal Authority indicators (First-person singular voice)
+  const hasPersonalVoice = /\b(i am|i build|i help|about me|solo builder|solo founder|full-stack builder|my work|my projects|my writings|behind the build|independent consultant|fractional cto|portfolio of)\b/i.test(fullCorpus);
+  const hasPersonalBio =
+    $('img[src*="profile" i], img[src*="avatar" i], [class*="bio" i], [class*="author" i]').length > 0 ||
+    /\b(about me|who i am|solo builder|solo founder)\b/i.test(fullCorpus);
+
+  if (hasPersonalVoice) {
+    personalScore += 6;
     detectedSignals.push('Solo Builder / Personal Voice');
   }
   if (hasPersonalBio) {
     personalScore += 3;
     detectedSignals.push('Personal Founder Identity Verified');
   }
-  if (hasSubstackOrBlog) {
+  if (hasSubstack) {
     personalScore += 3;
     detectedSignals.push('Independent Publishing & Substack Hub');
   }
-  if (hasShippedProjects && hasDirectBooking) {
+  if (hasShippedProjects && hasDirectBooking && hasPersonalVoice) {
     personalScore += 3;
     detectedSignals.push('Shipped Deliverables & Direct Consultative Path');
   }
 
-  // Agency & Studio indicators
-  if (/(services|case studies|client results|our work|our team|hire us|we design|we build|request a quote|client partners|creative studio|digital agency)/i.test(fullCorpus)) {
-    agencyScore += 4;
+  // Agency & Studio indicators (First-person plural voice & studio assets)
+  const hasAgencyVoice = /\b(our team|we build|we design|our services|digital agency|software development agency|creative studio|our clients|hire us|client partners|our work|request a quote|who we are|what we do|client results)\b/i.test(fullCorpus);
+
+  if (hasAgencyVoice) {
+    agencyScore += 6;
     detectedSignals.push('Agency & Studio Service Structure');
   }
   if (hasShowreel) {
@@ -310,7 +315,7 @@ export async function scanUrl(rawInputUrl: string, manualArchetype?: PageArchety
     detectedSignals.push('Video Showreel / Production Assets');
   }
   if (verifiedProofCount >= 3) {
-    agencyScore += 3;
+    agencyScore += 4;
     detectedSignals.push('Multiple Partner Proof Assets');
   }
   if (portfolioCount >= 2) {
@@ -320,7 +325,7 @@ export async function scanUrl(rawInputUrl: string, manualArchetype?: PageArchety
 
   // B2B SaaS indicators
   if (hasInteractiveTool) {
-    saasScore += 6;
+    saasScore += 8;
     detectedSignals.push('Interactive Functional Utility / Sandbox');
   }
   if (/(sign up free|start free trial|get started free|pricing|docs|documentation|api reference|dashboard|integrations|install )/i.test(fullCorpus)) {
@@ -351,18 +356,26 @@ export async function scanUrl(rawInputUrl: string, manualArchetype?: PageArchety
   if (manualArchetype) {
     computedArchetype = manualArchetype;
   } else {
-    if (personalScore >= 5 && personalScore >= agencyScore) {
-      computedArchetype = 'PERSONAL_AUTHORITY';
-    } else if (agencyScore >= 5 && agencyScore > saasScore) {
-      computedArchetype = 'AGENCY_STUDIO';
-    } else if (saasScore >= 4) {
+    if (hasInteractiveTool && saasScore >= 8) {
       computedArchetype = 'B2B_SAAS_TOOL';
+    } else if (agencyScore > personalScore && agencyScore >= 6) {
+      computedArchetype = 'AGENCY_STUDIO';
+    } else if (personalScore > agencyScore && personalScore >= 6) {
+      computedArchetype = 'PERSONAL_AUTHORITY';
+    } else if (funnelScore >= 6 && funnelScore > saasScore) {
+      computedArchetype = 'SINGLE_OFFER_FUNNEL';
+    } else if (saasScore >= 5) {
+      computedArchetype = 'B2B_SAAS_TOOL';
+    } else if (agencyScore >= 5) {
+      computedArchetype = 'AGENCY_STUDIO';
+    } else if (personalScore >= 5) {
+      computedArchetype = 'PERSONAL_AUTHORITY';
     } else if (funnelScore >= 5) {
       computedArchetype = 'SINGLE_OFFER_FUNNEL';
     } else {
       const candidates = [
-        { type: 'PERSONAL_AUTHORITY' as PageArchetype, score: personalScore },
         { type: 'AGENCY_STUDIO' as PageArchetype, score: agencyScore },
+        { type: 'PERSONAL_AUTHORITY' as PageArchetype, score: personalScore },
         { type: 'B2B_SAAS_TOOL' as PageArchetype, score: saasScore },
         { type: 'SINGLE_OFFER_FUNNEL' as PageArchetype, score: funnelScore },
       ];
