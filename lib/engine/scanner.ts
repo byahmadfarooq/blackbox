@@ -1,8 +1,8 @@
 import * as cheerio from 'cheerio';
-import { RawTelemetryMetrics } from './types';
+import { ArchetypeCalibration, PageArchetype, RawTelemetryMetrics } from './types';
 import { calculateReadability, detectBuzzwords } from './research-metrics';
 
-export async function scanUrl(rawInputUrl: string): Promise<RawTelemetryMetrics> {
+export async function scanUrl(rawInputUrl: string, manualArchetype?: PageArchetype): Promise<RawTelemetryMetrics> {
   let normalizedUrl = rawInputUrl.trim();
   if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
     normalizedUrl = `https://${normalizedUrl}`;
@@ -136,15 +136,11 @@ export async function scanUrl(rawInputUrl: string): Promise<RawTelemetryMetrics>
 
   const hasGithubRepo = $('a[href*="github.com"]').length > 0;
 
-  // Archetype classification
-  const pageAllText = $('body').text().toLowerCase();
-  let archetype: 'PRODUCT_SOFTWARE' | 'AGENCY_SERVICE' | 'GENERAL_B2B' = 'GENERAL_B2B';
+  // Extended asset indicators
+  const hasSubstackOrBlog = $('a[href*="substack.com"], a[href*="medium.com"], a[href*="/blog"], a[href*="/insights"], a[href*="/writing"], a[href*="/teardowns"], a[href*="/behind-the-build"]').length > 0;
+  const hasShippedProjects = $('a[href*="github.com"], a[href*="#projects"], [class*="project" i], [class*="portfolio" i], [id*="project" i]').length > 0 || /view live project|live demo|view project|case study/i.test($('a, button').text());
+  const hasDirectBooking = $('a[href*="/book"], a[href*="cal.com"], a[href*="calendly.com"], a[href*="tidycal.com"]').length > 0 || /book a call|book a strategy call|schedule a call/i.test($('a, button').text());
 
-  if (/(services|case-studies|portfolio|our work|hire us|client results)/i.test(pageAllText)) {
-    archetype = 'AGENCY_SERVICE';
-  } else if (hasInteractiveTool || hasGithubRepo || /(api|docs|pricing|sign up|dashboard|app|extension)/i.test(pageAllText)) {
-    archetype = 'PRODUCT_SOFTWARE';
-  }
 
   // 6. Persistent Navigation (Check classes, inline styles, embedded styles, and same-origin stylesheets)
   const headerHtml = $('header, nav, [role="banner"], .site-header, .navbar').prop('outerHTML') || '';
@@ -271,14 +267,155 @@ export async function scanUrl(rawInputUrl: string): Promise<RawTelemetryMetrics>
   const ogImage = $('meta[property="og:image"]').attr('content') || '';
   const hasOgImage = Boolean(ogImage && !ogImage.includes('default') && !ogImage.includes('placeholder'));
 
+  // 14. Deterministic Multi-Archetype Fingerprinting
+  const pageAllText = $('body').text().toLowerCase();
+  const metaContent = `${$('title').text()} ${$('meta[name="description"]').attr('content') || ''}`.toLowerCase();
+  const fullCorpus = `${metaContent} ${pageAllText}`;
+
+  const detectedSignals: string[] = [];
+  let agencyScore = 0;
+  let personalScore = 0;
+  let saasScore = 0;
+  let funnelScore = 0;
+
+  // Personal Authority indicators
+  const hasPersonalBio =
+    $('img[src*="profile" i], img[src*="avatar" i], [class*="bio" i], [class*="author" i], .nav-logo-text').length > 0 ||
+    /i am|i build|i help|about me|solo founder|solo builder|full-stack builder|consultant|strategist/i.test(fullCorpus);
+
+  if (/(i build|i help|about me|my work|solo builder|solo founder|full-stack builder|strategist|engineer & designer|behind the build|my projects)/i.test(fullCorpus)) {
+    personalScore += 5;
+    detectedSignals.push('Solo Builder / Personal Voice');
+  }
+  if (hasPersonalBio) {
+    personalScore += 3;
+    detectedSignals.push('Personal Founder Identity Verified');
+  }
+  if (hasSubstackOrBlog) {
+    personalScore += 3;
+    detectedSignals.push('Independent Publishing & Substack Hub');
+  }
+  if (hasShippedProjects && hasDirectBooking) {
+    personalScore += 3;
+    detectedSignals.push('Shipped Deliverables & Direct Consultative Path');
+  }
+
+  // Agency & Studio indicators
+  if (/(services|case studies|client results|our work|our team|hire us|we design|we build|request a quote|client partners|creative studio|digital agency)/i.test(fullCorpus)) {
+    agencyScore += 4;
+    detectedSignals.push('Agency & Studio Service Structure');
+  }
+  if (hasShowreel) {
+    agencyScore += 4;
+    detectedSignals.push('Video Showreel / Production Assets');
+  }
+  if (verifiedProofCount >= 3) {
+    agencyScore += 3;
+    detectedSignals.push('Multiple Partner Proof Assets');
+  }
+  if (portfolioCount >= 2) {
+    agencyScore += 3;
+    detectedSignals.push('Client Case Study Portfolio');
+  }
+
+  // B2B SaaS indicators
+  if (hasInteractiveTool) {
+    saasScore += 6;
+    detectedSignals.push('Interactive Functional Utility / Sandbox');
+  }
+  if (/(sign up free|start free trial|get started free|pricing|docs|documentation|api reference|dashboard|integrations|install )/i.test(fullCorpus)) {
+    saasScore += 4;
+    detectedSignals.push('Self-Serve Software & Developer Architecture');
+  }
+  if (hasGithubRepo) {
+    saasScore += 3;
+    detectedSignals.push('Public Codebase & Open-Source Receipts');
+  }
+
+  // Single-Offer Funnel indicators
+  if (topLevelNavCount <= 2 && ctaCount >= 1) {
+    funnelScore += 3;
+    detectedSignals.push('Distraction-Free Direct Action Flow');
+  }
+  if (/(limited spots|guarantee|one-time investment|special offer|claim your spot|order now|reserve now|money-back)/i.test(fullCorpus)) {
+    funnelScore += 4;
+    detectedSignals.push('Single High-Ticket Offer Anchors');
+  }
+  if ($('form').length === 1 && topLevelNavCount <= 1 && !hasInteractiveTool) {
+    funnelScore += 3;
+    detectedSignals.push('Singular Lead Squeeze Architecture');
+  }
+
+  let computedArchetype: PageArchetype = 'B2B_SAAS_TOOL';
+
+  if (manualArchetype) {
+    computedArchetype = manualArchetype;
+  } else {
+    if (personalScore >= 5 && personalScore >= agencyScore) {
+      computedArchetype = 'PERSONAL_AUTHORITY';
+    } else if (agencyScore >= 5 && agencyScore > saasScore) {
+      computedArchetype = 'AGENCY_STUDIO';
+    } else if (saasScore >= 4) {
+      computedArchetype = 'B2B_SAAS_TOOL';
+    } else if (funnelScore >= 5) {
+      computedArchetype = 'SINGLE_OFFER_FUNNEL';
+    } else {
+      const candidates = [
+        { type: 'PERSONAL_AUTHORITY' as PageArchetype, score: personalScore },
+        { type: 'AGENCY_STUDIO' as PageArchetype, score: agencyScore },
+        { type: 'B2B_SAAS_TOOL' as PageArchetype, score: saasScore },
+        { type: 'SINGLE_OFFER_FUNNEL' as PageArchetype, score: funnelScore },
+      ];
+      candidates.sort((a, b) => b.score - a.score);
+      computedArchetype = candidates[0].score > 0 ? candidates[0].type : 'B2B_SAAS_TOOL';
+    }
+  }
+
+  const calibrationConfigs: Record<PageArchetype, { label: string; benchmarkStandard: string; description: string }> = {
+    AGENCY_STUDIO: {
+      label: 'AGENCY & STUDIO HUB',
+      benchmarkStandard: "Miller's Law (7±2) & NN/g B2B Service Hierarchy",
+      description: 'Calibrated for multi-service consultative agencies. Evaluates work portfolios, showreels, client outcomes, and consultative booking paths.',
+    },
+    PERSONAL_AUTHORITY: {
+      label: 'PERSONAL BRAND & BUILDER PORTFOLIO',
+      benchmarkStandard: 'Solo Builder Authority & Shipped Deliverables Benchmark',
+      description: 'Calibrated for independent founders, fractional strategists, and technical consultants. Evaluates shipped projects, thought leadership, and high-trust advisory paths.',
+    },
+    B2B_SAAS_TOOL: {
+      label: 'B2B SAAS & PRODUCT UTILITY',
+      benchmarkStandard: 'Product-Led Growth (PLG) & Developer Self-Serve Benchmark',
+      description: 'Calibrated for software applications and web utilities. Evaluates immediate interactive sandboxes, friction-free trial access, and technical documentation.',
+    },
+    SINGLE_OFFER_FUNNEL: {
+      label: 'SINGLE-OFFER CONVERSION FUNNEL',
+      benchmarkStandard: 'CXL Distraction-Free Paid Funnel Standard',
+      description: 'Calibrated for dedicated paid ad landing pages and single high-ticket offers. Evaluates zero-leak navigation, immediate message-match, and singular CTA focus.',
+    },
+  };
+
+  const currentConfig = calibrationConfigs[computedArchetype];
+  const archetypeCalibration: ArchetypeCalibration = {
+    archetype: computedArchetype,
+    label: currentConfig.label,
+    benchmarkStandard: currentConfig.benchmarkStandard,
+    description: currentConfig.description,
+    detectedSignals: detectedSignals.slice(0, 4),
+    isManualOverride: Boolean(manualArchetype),
+  };
+
   return {
     targetUrl: normalizedUrl,
     domain,
     probeLatencyMs,
     statusCode: response.status,
-    archetype,
+    archetype: computedArchetype,
+    archetypeCalibration,
     hasInteractiveTool,
     hasGithubRepo,
+    hasSubstackOrBlog,
+    hasShippedProjects,
+    hasDirectBooking,
     h1Count,
     primaryH1,
     h1WordCount,

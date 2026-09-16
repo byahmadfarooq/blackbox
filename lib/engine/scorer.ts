@@ -37,87 +37,220 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
   }
 
   // 1.2 Choice Overload / Competing Links (7 pts)
-  if (raw.heroNavLinksCount <= 5) {
-    archScore += 7;
-    incidents.push({
-      id: 'nav-clean',
-      pillar: 'architecture',
-      pillarName: 'Conversion Architecture',
-      severity: 'CLEARED',
-      researchCitation: 'Hick-Hyman Cognitive Law',
-      headline: 'Focused Navigation Header',
-      plainEnglishImpact: `Found ${raw.heroNavLinksCount} top-level menu items. Keeping choices minimal prevents cognitive fatigue and directs attention to the primary conversion goal.`,
-      actionableFix: 'Maintain minimal links in your primary landing page header.',
-      pointsDelta: 7,
-    });
-  } else if (raw.heroNavLinksCount <= 7) {
-    archScore += 4;
-    incidents.push({
-      id: 'nav-moderate',
-      pillar: 'architecture',
-      pillarName: 'Conversion Architecture',
-      severity: 'FRICTION_WARN',
-      researchCitation: 'Hick-Hyman Cognitive Law',
-      headline: 'Header Contains Competing Navigation Links',
-      plainEnglishImpact: `Found ${raw.heroNavLinksCount} top-level links in the menu. Offering multiple competing options dilutes the probability of booking the primary call.`,
-      actionableFix: 'Move secondary links into a subtle footer menu or streamlined dropdown.',
-      pointsDelta: -3,
-    });
+  const isMultiPageHub = raw.archetype === 'AGENCY_STUDIO' || raw.archetype === 'PERSONAL_AUTHORITY';
+  const isSingleOffer = raw.archetype === 'SINGLE_OFFER_FUNNEL';
+
+  if (isMultiPageHub) {
+    // Agencies and Personal Portfolios legitimately need: Work, Services/Offers, Writing/Insights, About, Contact
+    if (raw.heroNavLinksCount <= 6) {
+      archScore += 7;
+      incidents.push({
+        id: 'nav-clean-hub',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'CLEARED',
+        researchCitation: "Miller's Cognitive Chunking Law (7±2)",
+        headline: 'Focused Multi-Page Navigation Structure',
+        plainEnglishImpact: `Found ${raw.heroNavLinksCount} top-level menu items. Miller's Law and NN/g navigation research prove 4 to 6 categories provide clear exploratory scent without cognitive overload.`,
+        actionableFix: 'Maintain these essential destination links in your primary navigation.',
+        pointsDelta: 7,
+      });
+    } else if (raw.heroNavLinksCount <= 8) {
+      archScore += 4;
+      incidents.push({
+        id: 'nav-moderate-hub',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'FRICTION_WARN',
+        researchCitation: "Miller's Cognitive Chunking Law (7±2)",
+        headline: 'Header Exceeds Recommended Menu Chunking',
+        plainEnglishImpact: `Found ${raw.heroNavLinksCount} top-level links in the header. Exceeding 6 primary links causes visual clutter on tablet and mobile viewports.`,
+        actionableFix: 'Consolidate secondary links (like About or Substack) into a dropdown or footer menu.',
+        pointsDelta: -3,
+      });
+    } else {
+      archScore += 1;
+      incidents.push({
+        id: 'nav-clutter-hub',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'FATAL_STALL',
+        researchCitation: 'Hick-Hyman Cognitive Law',
+        headline: 'Severe Choice Paralysis in Navigation',
+        plainEnglishImpact: `Found ${raw.heroNavLinksCount} top-level menu links. Choice overload directly increases bounce rates by distracting high-intent prospects from booking.`,
+        actionableFix: 'Streamline header to 5 core links and one distinct primary booking button.',
+        pointsDelta: -6,
+      });
+    }
+  } else if (isSingleOffer) {
+    // Squeeze / Paid Ad landing pages should have minimal or zero links
+    if (raw.heroNavLinksCount <= 2) {
+      archScore += 7;
+      incidents.push({
+        id: 'nav-clean-funnel',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'CLEARED',
+        researchCitation: 'CXL Distraction-Free Funnel Standard',
+        headline: 'Distraction-Free Funnel Architecture',
+        plainEnglishImpact: `Found ${raw.heroNavLinksCount} links. Squeeze and paid funnel pages achieve up to 28% higher conversion by stripping away secondary exit routes.`,
+        actionableFix: 'Keep the header completely distraction-free.',
+        pointsDelta: 7,
+      });
+    } else if (raw.heroNavLinksCount <= 4) {
+      archScore += 4;
+      incidents.push({
+        id: 'nav-moderate-funnel',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'FRICTION_WARN',
+        researchCitation: 'CXL Distraction-Free Funnel Standard',
+        headline: 'Secondary Exit Links on Single-Offer Page',
+        plainEnglishImpact: `Found ${raw.heroNavLinksCount} links in the header. On paid and single-offer landers, secondary links leak expensive traffic before visitors read the core offer.`,
+        actionableFix: 'Remove navigation links from this landing page so visitors focus solely on the primary offer.',
+        pointsDelta: -3,
+      });
+    } else {
+      archScore += 1;
+      incidents.push({
+        id: 'nav-clutter-funnel',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'FATAL_STALL',
+        researchCitation: 'CXL Distraction-Free Funnel Standard',
+        headline: 'Heavy Navigation Leakage on Offer Page',
+        plainEnglishImpact: `Found ${raw.heroNavLinksCount} top-level links. This page is set up as a single offer but retains full website navigation, diluting your conversion rate.`,
+        actionableFix: 'Remove the top navigation bar entirely on this conversion lander.',
+        pointsDelta: -6,
+      });
+    }
   } else {
-    archScore += 1;
-    incidents.push({
-      id: 'nav-clutter',
-      pillar: 'architecture',
-      pillarName: 'Conversion Architecture',
-      severity: 'FATAL_STALL',
-      researchCitation: 'Hick-Hyman Cognitive Law',
-      headline: 'Severe Choice Paralysis in Navigation',
-      plainEnglishImpact: `Found ${raw.heroNavLinksCount} top-level menu links. Psychological research shows choice overload directly increases bounce rate on cold traffic.`,
-      actionableFix: 'Strip your header down to just your logo and one single action button.',
-      pointsDelta: -6,
-    });
+    // Standard B2B SaaS
+    if (raw.heroNavLinksCount <= 5) {
+      archScore += 7;
+      incidents.push({
+        id: 'nav-clean-saas',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'CLEARED',
+        researchCitation: 'Product-Led Growth Benchmark Standard',
+        headline: 'Focused Product Navigation',
+        plainEnglishImpact: `Found ${raw.heroNavLinksCount} menu links. Clear product hierarchy directs prospects straight toward self-serve activation.`,
+        actionableFix: 'Maintain concise product navigation links.',
+        pointsDelta: 7,
+      });
+    } else if (raw.heroNavLinksCount <= 7) {
+      archScore += 4;
+      incidents.push({
+        id: 'nav-moderate-saas',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'FRICTION_WARN',
+        researchCitation: 'Hick-Hyman Cognitive Law',
+        headline: 'Header Contains Competing Product Links',
+        plainEnglishImpact: `Found ${raw.heroNavLinksCount} top-level links. Multiple navigation options compete with the primary sign-up or demo action.`,
+        actionableFix: 'Move secondary links into product mega-menus or footer.',
+        pointsDelta: -3,
+      });
+    } else {
+      archScore += 1;
+      incidents.push({
+        id: 'nav-clutter-saas',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'FATAL_STALL',
+        researchCitation: 'Hick-Hyman Cognitive Law',
+        headline: 'Severe Choice Paralysis in Navigation',
+        plainEnglishImpact: `Found ${raw.heroNavLinksCount} top-level menu links, causing cognitive overload before visitors experience the product.`,
+        actionableFix: 'Trim top menu to essential product links and one primary action button.',
+        pointsDelta: -6,
+      });
+    }
   }
 
   // 1.3 Form Friction Factor (8 pts)
-  if (raw.formInputCount <= 3) {
-    archScore += 8;
-    incidents.push({
-      id: 'form-lean',
-      pillar: 'architecture',
-      pillarName: 'Conversion Architecture',
-      severity: 'CLEARED',
-      researchCitation: 'Baymard Institute Form Benchmark',
-      headline: 'Low-Friction Lead Capture',
-      plainEnglishImpact: 'Your lead form requires 3 or fewer fields. Baymard research proves cutting form fields from 6 to 3 increases submission rates by up to 25%.',
-      actionableFix: 'Never ask for unnecessary information before booking the first meeting.',
-      pointsDelta: 8,
-    });
-  } else if (raw.formInputCount <= 6) {
-    archScore += 4;
-    incidents.push({
-      id: 'form-moderate',
-      pillar: 'architecture',
-      pillarName: 'Conversion Architecture',
-      severity: 'FRICTION_WARN',
-      researchCitation: 'Baymard Institute Form Benchmark',
-      headline: 'Moderate Form Field Overhead',
-      plainEnglishImpact: `Your form requires ${raw.formInputCount} fields. Every additional field required typically reduces form completion by 7% to 10%.`,
-      actionableFix: 'Cut non-essential fields. Ask only for name, email, and company website.',
-      pointsDelta: -4,
-    });
+  if (isMultiPageHub) {
+    if (raw.formInputCount <= 4) {
+      archScore += 8;
+      incidents.push({
+        id: 'form-lean-consult',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'CLEARED',
+        researchCitation: 'Baymard Institute Form Benchmark',
+        headline: 'Low-Friction Consultative Capture',
+        plainEnglishImpact: 'Your lead form requires 4 or fewer fields, balancing low friction with initial scoping context.',
+        actionableFix: 'Maintain lean fields on the initial booking form.',
+        pointsDelta: 8,
+      });
+    } else if (raw.formInputCount <= 6) {
+      archScore += 6;
+      incidents.push({
+        id: 'form-moderate-consult',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'CLEARED',
+        researchCitation: 'Gartner B2B Buying Qualification Standard',
+        headline: 'Intentional High-Ticket Qualification Fields',
+        plainEnglishImpact: `Detected ${raw.formInputCount} form fields. For high-ticket service agreements, asking for budget and timeline filters low-intent leads without harming qualified pipeline.`,
+        actionableFix: 'Ensure every field directly helps you prepare for the discovery call.',
+        pointsDelta: 6,
+      });
+    } else {
+      archScore += 2;
+      incidents.push({
+        id: 'form-heavy-consult',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'FATAL_STALL',
+        researchCitation: 'Baymard Institute Form Benchmark',
+        headline: 'Excessive Lead Capture Questionnaire',
+        plainEnglishImpact: `Found ${raw.formInputCount} form fields. High-intent decision makers drop off when asked to fill out exhaustive surveys before ever talking to a strategist.`,
+        actionableFix: 'Shift deeper scoping questions into the post-booking calendar redirect.',
+        pointsDelta: -6,
+      });
+    }
   } else {
-    archScore += 0;
-    incidents.push({
-      id: 'form-heavy',
-      pillar: 'architecture',
-      pillarName: 'Conversion Architecture',
-      severity: 'FATAL_STALL',
-      researchCitation: 'Baymard Institute Form Benchmark',
-      headline: 'High Form Completion Friction',
-      plainEnglishImpact: `Your form has ${raw.formInputCount} input fields. High-intent visitors drop off when asked to fill out long questionnaires before speaking to someone.`,
-      actionableFix: 'Switch to a 2-field form or an instant calendar scheduler with progressive qualification.',
-      pointsDelta: -8,
-    });
+    if (raw.formInputCount <= 3) {
+      archScore += 8;
+      incidents.push({
+        id: 'form-lean',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'CLEARED',
+        researchCitation: 'Baymard Institute Form Benchmark',
+        headline: 'Low-Friction Lead Capture',
+        plainEnglishImpact: 'Your lead form requires 3 or fewer fields. Baymard research proves cutting form fields from 6 to 3 increases submission rates by up to 25%.',
+        actionableFix: 'Never ask for unnecessary information before the primary conversion step.',
+        pointsDelta: 8,
+      });
+    } else if (raw.formInputCount <= 6) {
+      archScore += 4;
+      incidents.push({
+        id: 'form-moderate',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'FRICTION_WARN',
+        researchCitation: 'Baymard Institute Form Benchmark',
+        headline: 'Moderate Form Field Overhead',
+        plainEnglishImpact: `Your form requires ${raw.formInputCount} fields. Every additional field required typically reduces form completion by 7% to 10%.`,
+        actionableFix: 'Cut non-essential fields. Ask only for name and email.',
+        pointsDelta: -4,
+      });
+    } else {
+      archScore += 0;
+      incidents.push({
+        id: 'form-heavy',
+        pillar: 'architecture',
+        pillarName: 'Conversion Architecture',
+        severity: 'FATAL_STALL',
+        researchCitation: 'Baymard Institute Form Benchmark',
+        headline: 'High Form Completion Friction',
+        plainEnglishImpact: `Your form has ${raw.formInputCount} input fields. Visitors abandon long forms when simple account creation or demo access is expected.`,
+        actionableFix: 'Switch to a 1-step social login or email-only sign up.',
+        pointsDelta: -8,
+      });
+    }
   }
 
   // 1.4 Persistent / Sticky Navigation (7 pts)
@@ -364,66 +497,168 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
   }
 
   // 3.2 Client Logos / Showreel / Portfolio Proof (8 pts)
-  const isProductWithUtility = raw.archetype === 'PRODUCT_SOFTWARE' && (raw.hasInteractiveTool || raw.hasGithubRepo);
+  // 3.2 Visual Proof & Work Assets (8 pts)
+  const isAgency = raw.archetype === 'AGENCY_STUDIO';
+  const isPersonal = raw.archetype === 'PERSONAL_AUTHORITY';
+  const isProduct = raw.archetype === 'B2B_SAAS_TOOL';
+
   const totalVisualProof = raw.clientLogoCount + (raw.hasShowreel ? 5 : 0) + raw.portfolioItemCount;
 
-  if (totalVisualProof >= 3) {
-    proofScore += 8;
-    incidents.push({
-      id: 'logos-verified',
-      pillar: 'proof',
-      pillarName: 'Proof Density',
-      severity: 'CLEARED',
-      researchCitation: 'Nielsen Norman Group Social Proof Study',
-      headline: raw.hasShowreel ? 'Showreel & Visual Proof Assets Detected' : 'Client Proof Assets Present',
-      plainEnglishImpact: raw.hasShowreel
-        ? 'Detected rich visual work, video showreel, and verified partner assets showcasing past deliverables.'
-        : `Detected ${raw.clientLogoCount} client, partner, or portfolio proof assets across the page. Showing verifiable work reduces buyer hesitation.`,
-      actionableFix: 'Keep your best client case studies and logos visible above or near the main fold.',
-      pointsDelta: 8,
-    });
-  } else if (isProductWithUtility) {
-    proofScore += 8;
-    incidents.push({
-      id: 'product-utility-verified',
-      pillar: 'proof',
-      pillarName: 'Proof Density',
-      severity: 'CLEARED',
-      researchCitation: 'Product-Led Growth Benchmark Standard',
-      headline: 'Interactive Product Utility Verified',
-      plainEnglishImpact: 'Your page provides an immediate interactive utility or open-source codebase for visitors to test. Demonstrating working software converts cold traffic faster than static logo strips.',
-      actionableFix: 'Maintain frictionless access to the interactive demo above the fold.',
-      pointsDelta: 8,
-    });
+  if (isAgency) {
+    if (raw.hasShowreel || totalVisualProof >= 3) {
+      proofScore += 8;
+      incidents.push({
+        id: 'proof-agency-verified',
+        pillar: 'proof',
+        pillarName: 'Proof Density',
+        severity: 'CLEARED',
+        researchCitation: 'Nielsen Norman Group Agency Proof Benchmark',
+        headline: raw.hasShowreel ? 'Agency Showreel & Production Assets Detected' : 'Client Case Study Assets Verified',
+        plainEnglishImpact: raw.hasShowreel
+          ? 'Found rich video showreel assets and verifiable partner deliverables, establishing immediate creative credibility.'
+          : `Detected ${raw.clientLogoCount + raw.portfolioItemCount} agency portfolio and partner assets. Showing tangible past work removes buyer hesitation.`,
+        actionableFix: 'Keep your strongest case studies visible near the main fold.',
+        pointsDelta: 8,
+      });
+    } else {
+      proofScore += 2;
+      incidents.push({
+        id: 'proof-agency-sparse',
+        pillar: 'proof',
+        pillarName: 'Proof Density',
+        severity: 'FRICTION_WARN',
+        researchCitation: 'Nielsen Norman Group Agency Proof Benchmark',
+        headline: 'Few Agency Proof Assets Detected',
+        plainEnglishImpact: 'Prospective clients see minimal visual proof of your agency deliverables or past clients.',
+        actionableFix: 'Add a video showreel or a 3-project case study strip with client logos.',
+        pointsDelta: -6,
+      });
+    }
+  } else if (isPersonal) {
+    if (raw.hasShippedProjects || raw.hasSubstackOrBlog || totalVisualProof >= 2) {
+      proofScore += 8;
+      incidents.push({
+        id: 'proof-personal-verified',
+        pillar: 'proof',
+        pillarName: 'Proof Density',
+        severity: 'CLEARED',
+        researchCitation: 'Solo Builder Authority & Deliverables Benchmark',
+        headline: 'Shipped Deliverables & Builder Authority Verified',
+        plainEnglishImpact: 'Found verified shipped projects, published teardowns, or thought leadership hubs. High-ticket buyers evaluate independent strategists by tangible proof of work rather than corporate logo strips.',
+        actionableFix: 'Keep live project links and authority teardowns accessible from the top fold.',
+        pointsDelta: 8,
+      });
+    } else {
+      proofScore += 3;
+      incidents.push({
+        id: 'proof-personal-sparse',
+        pillar: 'proof',
+        pillarName: 'Proof Density',
+        severity: 'FRICTION_WARN',
+        researchCitation: 'Solo Builder Authority & Deliverables Benchmark',
+        headline: 'Limited Tangible Work Shipped on Page',
+        plainEnglishImpact: 'Visitors see claims of capability without direct links to shipped systems, live apps, or published breakdowns.',
+        actionableFix: 'Add 2 to 3 cards showcasing shipped projects with live demonstration links.',
+        pointsDelta: -5,
+      });
+    }
+  } else if (isProduct) {
+    if (raw.hasInteractiveTool || raw.hasGithubRepo || totalVisualProof >= 3) {
+      proofScore += 8;
+      incidents.push({
+        id: 'proof-product-verified',
+        pillar: 'proof',
+        pillarName: 'Proof Density',
+        severity: 'CLEARED',
+        researchCitation: 'Product-Led Growth Benchmark Standard',
+        headline: 'Interactive Product Utility & Developer Proof Verified',
+        plainEnglishImpact: 'Your page provides an immediate interactive console, working sandbox, or open-source repository. Letting users test working software converts faster than static marketing claims.',
+        actionableFix: 'Maintain instant sandbox access above the fold.',
+        pointsDelta: 8,
+      });
+    } else {
+      proofScore += 2;
+      incidents.push({
+        id: 'proof-product-sparse',
+        pillar: 'proof',
+        pillarName: 'Proof Density',
+        severity: 'FRICTION_WARN',
+        researchCitation: 'Product-Led Growth Benchmark Standard',
+        headline: 'No Interactive Demonstration or Technical Proof',
+        plainEnglishImpact: 'Visitors cannot see or touch the software before signing up, increasing friction for technical buyers.',
+        actionableFix: 'Add an interactive product sandbox or animated product walkthrough.',
+        pointsDelta: -6,
+      });
+    }
   } else {
-    proofScore += 2;
-    incidents.push({
-      id: 'logos-sparse',
-      pillar: 'proof',
-      pillarName: 'Proof Density',
-      severity: 'FRICTION_WARN',
-      researchCitation: 'Nielsen Norman Group Social Proof Study',
-      headline: 'Few or No Client Logos Detected',
-      plainEnglishImpact: 'Visitors see little immediate visual proof of who has trusted or worked with you in the past.',
-      actionableFix: 'Include a clean logo strip of companies, platforms, or publications you have worked with.',
-      pointsDelta: -6,
-    });
+    // Single-Offer Funnel
+    if (totalVisualProof >= 2 || raw.quantifiedMetricsFound.length >= 2) {
+      proofScore += 8;
+      incidents.push({
+        id: 'proof-funnel-verified',
+        pillar: 'proof',
+        pillarName: 'Proof Density',
+        severity: 'CLEARED',
+        researchCitation: 'CXL Quantitative Proof Research',
+        headline: 'Offer Receipts & Transformation Proof Present',
+        plainEnglishImpact: 'Found concrete receipts and measurable outcome evidence directly tied to the primary offer.',
+        actionableFix: 'Position key transformation proof directly beside the order button.',
+        pointsDelta: 8,
+      });
+    } else {
+      proofScore += 2;
+      incidents.push({
+        id: 'proof-funnel-sparse',
+        pillar: 'proof',
+        pillarName: 'Proof Density',
+        severity: 'FATAL_STALL',
+        researchCitation: 'CXL Quantitative Proof Research',
+        headline: 'Missing Proof Receipts on Core Offer',
+        plainEnglishImpact: 'Selling a single high-ticket offer without measurable case studies or client receipts causes high cold traffic bounce.',
+        actionableFix: 'Add before/after case metrics and screenshots validating your offer claims.',
+        pointsDelta: -6,
+      });
+    }
   }
 
   // 3.3 Testimonials (7 pts)
   if (raw.testimonialCount >= 1) {
     proofScore += 7;
-  } else if (isProductWithUtility) {
+    incidents.push({
+      id: 'testimonial-verified',
+      pillar: 'proof',
+      pillarName: 'Proof Density',
+      severity: 'CLEARED',
+      researchCitation: 'Spiegel Research Center Social Proof Findings',
+      headline: 'Customer Testimonials & Social Endorsements Present',
+      plainEnglishImpact: 'Direct client quotes validate your claims. Spiegel Research proves reviews increase conversion rates by up to 270%.',
+      actionableFix: 'Keep client names, roles, and headshots attached to quotes.',
+      pointsDelta: 7,
+    });
+  } else if (isProduct && raw.hasInteractiveTool) {
     proofScore += 5;
     incidents.push({
-      id: 'testimonial-utility-early',
+      id: 'testimonial-product-utility',
       pillar: 'proof',
       pillarName: 'Proof Density',
       severity: 'FRICTION_WARN',
-      researchCitation: 'Spiegel Research Center Social Proof Findings',
-      headline: 'Early-Stage Product Proof Calibration',
-      plainEnglishImpact: 'While your interactive utility provides strong functional proof, adding 1 or 2 user quotes or community metrics will anchor social validation.',
-      actionableFix: 'Embed a couple of authentic user quotes or GitHub star milestones as you scale.',
+      researchCitation: 'Product-Led Growth Benchmark Standard',
+      headline: 'Functional Utility Substitutes Social Proof',
+      plainEnglishImpact: 'While live software gives visitors immediate proof of utility, adding 1 or 2 authentic user reviews will complete social validation.',
+      actionableFix: 'Embed a couple of user quotes or GitHub star milestones as you scale.',
+      pointsDelta: -2,
+    });
+  } else if (isPersonal && (raw.hasShippedProjects || raw.hasSubstackOrBlog)) {
+    proofScore += 5;
+    incidents.push({
+      id: 'testimonial-personal-work',
+      pillar: 'proof',
+      pillarName: 'Proof Density',
+      severity: 'FRICTION_WARN',
+      researchCitation: 'Solo Builder Authority & Deliverables Benchmark',
+      headline: 'Work Proof Anchored, Testimonial Stack Pending',
+      plainEnglishImpact: 'Your shipped projects and published teardowns establish strong technical credibility. Adding 1 or 2 client quotes will anchor social validation.',
+      actionableFix: 'Add 2 short client endorsements with their name, role, and outcome.',
       pointsDelta: -2,
     });
   } else {
@@ -434,7 +669,7 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
       pillarName: 'Proof Density',
       severity: 'FRICTION_WARN',
       researchCitation: 'Spiegel Research Center Social Proof Findings',
-      headline: 'No Testimonials or Quotes Detected',
+      headline: 'No Client Testimonials or Quotes Detected',
       plainEnglishImpact: 'There are no direct quotes from clients or users endorsing your solution. Spiegel Research data proves customer reviews increase conversion rates by up to 270%.',
       actionableFix: 'Add 2 to 3 concise testimonials with client names, titles, and headshots.',
       pointsDelta: -5,
@@ -635,6 +870,7 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
     tier,
     tierLabel,
     tierDescription,
+    archetypeCalibration: raw.archetypeCalibration,
     pillars: {
       architecture: architecturePillar,
       messaging: messagingPillar,

@@ -30,14 +30,33 @@ export interface PillarScore {
   summary: string;
 }
 
+export type PageArchetype = 
+  | 'AGENCY_STUDIO'
+  | 'PERSONAL_AUTHORITY'
+  | 'B2B_SAAS_TOOL'
+  | 'SINGLE_OFFER_FUNNEL';
+
+export interface ArchetypeCalibration {
+  archetype: PageArchetype;
+  label: string;
+  benchmarkStandard: string;
+  description: string;
+  detectedSignals: string[];
+  isManualOverride: boolean;
+}
+
 export interface RawTelemetryMetrics {
   targetUrl: string;
   domain: string;
   probeLatencyMs: number;
   statusCode: number;
-  archetype: 'PRODUCT_SOFTWARE' | 'AGENCY_SERVICE' | 'GENERAL_B2B';
+  archetype: PageArchetype;
+  archetypeCalibration: ArchetypeCalibration;
   hasInteractiveTool: boolean;
   hasGithubRepo: boolean;
+  hasSubstackOrBlog: boolean;
+  hasShippedProjects: boolean;
+  hasDirectBooking: boolean;
   h1Count: number;
   primaryH1: string;
   h1WordCount: number;
@@ -74,6 +93,7 @@ export interface TelemetryResult {
   tier: SurvivabilityTier;
   tierLabel: string;
   tierDescription: string;
+  archetypeCalibration: ArchetypeCalibration;
   pillars: {
     architecture: PillarScore;
     messaging: PillarScore;

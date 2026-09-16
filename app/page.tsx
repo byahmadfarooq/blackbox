@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -8,7 +8,7 @@ import { PillarGrid } from '@/components/PillarGrid';
 import { IncidentTerminal } from '@/components/IncidentTerminal';
 import { KaivexBanner } from '@/components/KaivexBanner';
 import { ShareBar } from '@/components/ShareBar';
-import { TelemetryResult } from '@/lib/engine/types';
+import { PageArchetype, TelemetryResult } from '@/lib/engine/types';
 
 function UrlQueryListener({ onTargetUrl }: { onTargetUrl: (url: string) => void }) {
   const searchParams = useSearchParams();
@@ -23,6 +23,7 @@ function UrlQueryListener({ onTargetUrl }: { onTargetUrl: (url: string) => void 
 
 export default function Home() {
   const [urlInput, setUrlInput] = useState('');
+  const [selectedArchetype, setSelectedArchetype] = useState<'AUTO' | PageArchetype>('AUTO');
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export default function Home() {
   const loadingSequence = [
     'CONNECTING TO TARGET HOST VIA HTTPS...',
     'CAPTURING FULL-PAGE DOM & VIEWPORT NODES...',
+    'CLASSIFYING PAGE ARCHETYPE & CALIBRATION STANDARD...',
     'AUDITING PRIMARY CTA DENSITY & NAV FRICTION...',
     'EVALUATING HEADLINE SCANNABILITY & ICP HOOK...',
     'CHECKING QUANTIFIED PROOFS & CLIENT ASSETS...',
@@ -59,7 +61,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [loading]);
 
-  const executeScan = async (target: string) => {
+  const executeScan = async (target: string, overrideArchetype?: PageArchetype) => {
     if (!target.trim()) {
       setError('Please enter a website URL.');
       return;
@@ -70,10 +72,11 @@ export default function Home() {
     setReport(null);
 
     try {
+      const manualType = overrideArchetype || (selectedArchetype === 'AUTO' ? undefined : selectedArchetype);
       const res = await fetch('/api/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: target }),
+        body: JSON.stringify({ url: target, manualArchetype: manualType }),
       });
 
       const data = await res.json();
@@ -126,8 +129,33 @@ export default function Home() {
 
           {/* Subtitle */}
           <p className="text-sm sm:text-base text-[#A1A1AA] max-w-2xl leading-relaxed mb-10">
-            Instant, mathematical friction diagnostics for B2B landing pages. Detect hidden navigation stalls, tracking bloat, and messaging drag in 3.5 seconds.
+            Instant, mathematical friction diagnostics for B2B landing pages. Calibrated specifically for Agency Hubs, Solo Builder Portfolios, B2B SaaS, and Single-Offer Funnels.
           </p>
+
+          {/* Archetype Selector */}
+          <div className="w-full max-w-2xl mb-4 flex flex-wrap items-center justify-center gap-1.5 font-mono text-[11px]">
+            <span className="text-[#52525B] mr-1">CALIBRATION:</span>
+            {[
+              { key: 'AUTO', label: 'AUTO-DETECT' },
+              { key: 'AGENCY_STUDIO', label: 'AGENCY & STUDIO' },
+              { key: 'PERSONAL_AUTHORITY', label: 'PERSONAL PORTFOLIO' },
+              { key: 'B2B_SAAS_TOOL', label: 'B2B SAAS / UTILITY' },
+              { key: 'SINGLE_OFFER_FUNNEL', label: 'SINGLE OFFER' },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setSelectedArchetype(opt.key as 'AUTO' | PageArchetype)}
+                className={`px-2.5 py-1 rounded transition-colors ${
+                  selectedArchetype === opt.key
+                    ? 'bg-[#FF5500]/15 text-[#FF5500] border border-[#FF5500]/40 font-bold shadow-[0_0_12px_rgba(255,85,0,0.15)]'
+                    : 'bg-[#0E0E14] text-[#71717A] hover:text-[#D4D4D8] border border-[#27272A]'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
 
           {/* Input Console */}
           <form onSubmit={handleFormSubmit} className="w-full max-w-2xl mb-8">
@@ -136,7 +164,7 @@ export default function Home() {
                 type="text"
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
-                placeholder="Enter B2B landing page URL (e.g. stripe.com)"
+                placeholder="Enter website URL (e.g. bigosoft.us or ahmadfarooq.vercel.app)"
                 className="flex-1 bg-transparent px-4 py-3.5 text-sm sm:text-base text-white placeholder-[#52525B] focus:outline-none font-mono"
               />
               <button
@@ -156,30 +184,35 @@ export default function Home() {
           {/* Quick Presets */}
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-mono text-[#71717A] mb-16">
             <span className="text-[#52525B]">TEST TELEMETRY ON:</span>
-            {['stripe.com', 'linear.app', 'supabase.com'].map((preset) => (
+            {[
+              { label: 'stripe.com', url: 'stripe.com', type: 'B2B_SAAS_TOOL' as PageArchetype },
+              { label: 'ahmadfarooq.vercel.app', url: 'ahmadfarooq.vercel.app', type: 'PERSONAL_AUTHORITY' as PageArchetype },
+              { label: 'bigosoft.us', url: 'bigosoft.us', type: 'AGENCY_STUDIO' as PageArchetype },
+            ].map((preset) => (
               <button
-                key={preset}
+                key={preset.label}
                 type="button"
                 onClick={() => {
-                  setUrlInput(preset);
-                  executeScan(preset);
+                  setUrlInput(preset.url);
+                  setSelectedArchetype(preset.type);
+                  executeScan(preset.url, preset.type);
                 }}
                 className="bg-[#0E0E14] hover:bg-[#181822] text-[#D4D4D8] hover:text-white border border-[#27272A] px-2.5 py-1 rounded transition-colors"
               >
-                {preset}
+                {preset.label}
               </button>
             ))}
           </div>
 
           {/* Live Telemetry Ticker */}
           <div className="w-full border-t border-[#1C1C22] pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 font-mono text-[11px] text-[#52525B]">
-            <div>RECENT SCANS:</div>
+            <div>RECENT TELEMETRY SCANS:</div>
             <div className="flex flex-wrap gap-4 text-[#71717A]">
-              <span>STRIPE.COM <strong className="text-[#00FF88]">91% CLEARED</strong></span>
+              <span>STRIPE.COM <strong className="text-[#00FF88]">91% CLEARED (SAAS)</strong></span>
               <span>•</span>
-              <span>LINEAR.APP <strong className="text-[#FFB700]">77% TURBULENCE</strong></span>
+              <span>AHMADFAROOQ.VERCEL.APP <strong className="text-[#00FF88]">91% OPTIMAL (BUILDER)</strong></span>
               <span>•</span>
-              <span>DATADOG.COM <strong className="text-[#00FF88]">94% OPTIMAL</strong></span>
+              <span>BIGOSOFT.US <strong className="text-[#FFB700]">75% VERIFIED (AGENCY)</strong></span>
             </div>
           </div>
         </main>
@@ -218,7 +251,7 @@ export default function Home() {
       {report && (
         <main className="py-4 animate-in fade-in duration-500">
           {/* Top Telemetry Strip */}
-          <div className="bg-[#0A0A0E] border border-[#1C1C22] rounded-lg p-3 sm:p-4 grid grid-cols-2 md:grid-cols-4 gap-3 font-mono text-xs mb-6">
+          <div className="bg-[#0A0A0E] border border-[#1C1C22] rounded-lg p-3 sm:p-4 grid grid-cols-2 md:grid-cols-4 gap-3 font-mono text-xs mb-4">
             <div>
               <span className="text-[#52525B]">TARGET: </span>
               <span className="text-white font-semibold">{report.domain}</span>
@@ -239,6 +272,42 @@ export default function Home() {
                 [ SCAN ANOTHER DOMAIN ]
               </button>
             </div>
+          </div>
+
+          {/* Archetype Calibration Seal */}
+          <div className="bg-[#09090D] border border-[#1F1F28] rounded-lg p-4 mb-6 font-mono text-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#00FF88] animate-pulse" />
+                <span className="text-[#00FF88] font-bold tracking-wider uppercase text-[11px]">
+                  CALIBRATION: {report.archetypeCalibration.label}
+                </span>
+                {report.archetypeCalibration.isManualOverride && (
+                  <span className="bg-[#FF5500]/15 text-[#FF5500] text-[9.5px] px-2 py-0.5 rounded border border-[#FF5500]/30 font-semibold">
+                    MANUAL OVERRIDE
+                  </span>
+                )}
+              </div>
+              <p className="text-[#A1A1AA] text-xs max-w-2xl leading-relaxed">
+                {report.archetypeCalibration.description}
+              </p>
+              <div className="text-[10.5px] text-[#52525B]">
+                BENCHMARK STANDARD: {report.archetypeCalibration.benchmarkStandard}
+              </div>
+            </div>
+
+            {report.archetypeCalibration.detectedSignals.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 shrink-0 max-w-xs justify-start md:justify-end">
+                {report.archetypeCalibration.detectedSignals.map((sig, idx) => (
+                  <span
+                    key={idx}
+                    className="bg-[#14141C] text-[#D4D4D8] border border-[#272734] px-2 py-0.5 rounded text-[10px]"
+                  >
+                    {sig}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Main Dashboard Grid */}
@@ -263,11 +332,7 @@ export default function Home() {
           <IncidentTerminal incidents={report.incidents} />
 
           {/* Share and Export Bar */}
-          <ShareBar
-            domain={report.domain}
-            score={report.overallScore}
-            tierLabel={report.tierLabel}
-          />
+          <ShareBar report={report} />
 
           {/* Subtle Kaivex Systems Diagnostic Note */}
           <KaivexBanner score={report.overallScore} />
@@ -283,4 +348,3 @@ export default function Home() {
     </div>
   );
 }
-

@@ -5,7 +5,7 @@ import { scoreTelemetry } from '@/lib/engine/scorer';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { url } = body;
+    const { url, manualArchetype } = body;
 
     if (!url || typeof url !== 'string') {
       return NextResponse.json(
@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Run deterministic scan and scoring
-    const rawMetrics = await scanUrl(cleanUrl);
+    // Run deterministic scan and scoring with archetype calibration
+    const rawMetrics = await scanUrl(cleanUrl, manualArchetype);
     const telemetryResult = scoreTelemetry(rawMetrics);
 
     return NextResponse.json({
