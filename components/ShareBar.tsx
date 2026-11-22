@@ -55,6 +55,19 @@ export function ShareBar({ report, token }: { report: SharedReport; token: strin
     }
   };
 
+  const savePdf = () => {
+    // The browser uses the page title as the PDF file name, so set a clean one while printing.
+    const original = document.title;
+    const day = new Date(report.timestamp).toISOString().slice(0, 10);
+    document.title = `Blackbox Report - ${domain} - ${day}`;
+    const restore = () => {
+      document.title = original;
+      window.removeEventListener('afterprint', restore);
+    };
+    window.addEventListener('afterprint', restore);
+    window.print();
+  };
+
   const snippet =
     format === 'html'
       ? `<a href="${shareUrl}"><img src="${badgeUrl}" alt="Blackbox score ${score}/100" height="28"></a>`
@@ -92,7 +105,7 @@ export function ShareBar({ report, token }: { report: SharedReport; token: strin
           </div>
           <div className="flex flex-wrap gap-2">
             <button className={btn} onClick={() => copy(summary, 'Summary copied.')}>Copy summary</button>
-            <button className={btn} onClick={() => window.print()}>Save as PDF</button>
+            <button className={btn} onClick={savePdf}>Save as PDF</button>
             <button className={btn} onClick={() => setBadgeOpen((v) => !v)} aria-expanded={badgeOpen}>Badge</button>
           </div>
           <p className="min-h-5 text-sm text-good" role="status">{notice}</p>
