@@ -28,3 +28,12 @@ body {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+html { scroll-behavior: smooth; }
+summary::-webkit-details-marker { display: none; }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+  section, li { break-inside: avoid; }
+}

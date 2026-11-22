@@ -3,6 +3,8 @@ import { scanUrl } from '@/lib/engine/scanner';
 import { scoreTelemetry } from '@/lib/engine/scorer';
 import { UnsafeUrlError, assertPublicUrl } from '@/lib/engine/safe-fetch';
 import { rateLimit } from '@/lib/rate-limit';
+import { finalizeResult, toShared } from '@/lib/engine/report';
+import { encodeReport } from '@/lib/share';
 
 const ARCHETYPES = ['AGENCY_STUDIO', 'PERSONAL_AUTHORITY', 'B2B_SAAS_TOOL', 'SINGLE_OFFER_FUNNEL'] as const;
 
@@ -31,9 +33,9 @@ export async function POST(req: NextRequest) {
 
     await assertPublicUrl(cleanUrl);
     const rawMetrics = await scanUrl(cleanUrl, archetype);
-    const result = scoreTelemetry(rawMetrics);
+    const result = finalizeResult(scoreTelemetry(rawMetrics));
 
-    return NextResponse.json({ success: true, data: result });
+    return NextResponse.json({ success: true, token: encodeReport(toShared(result)) });
   } catch (error: unknown) {
     if (error instanceof UnsafeUrlError) {
       return NextResponse.json({ success: false, error: error.message }, { status: 400 });

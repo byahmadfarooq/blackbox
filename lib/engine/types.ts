@@ -18,6 +18,8 @@ export interface IncidentItem {
   plainEnglishImpact: string;
   actionableFix: string;
   pointsDelta: number;
+  /** 'unconfirmed' = we could only read the page's code, so a script-built element may have been missed. */
+  confidence?: 'confirmed' | 'unconfirmed';
 }
 
 export interface PillarScore {
@@ -103,3 +105,5 @@ export interface TelemetryResult {
   incidents: IncidentItem[];
   rawMetrics: RawTelemetryMetrics;
 }
+
+export type SharedReport = Omit<TelemetryResult, 'rawMetrics'>;

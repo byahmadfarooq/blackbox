@@ -7,14 +7,16 @@ const LABEL: Record<IncidentSeverity, string> = {
   FRICTION_WARN: 'Worth fixing',
   CLEARED: 'Passed',
 };
-const CHIP: Record<IncidentSeverity, string> = {
-  FATAL_STALL: 'bg-bad/10 text-bad',
-  FRICTION_WARN: 'bg-warn/10 text-warn',
-  CLEARED: 'bg-good/10 text-good',
+const DOT: Record<IncidentSeverity, string> = {
+  FATAL_STALL: 'bg-bad',
+  FRICTION_WARN: 'bg-warn',
+  CLEARED: 'bg-good',
 };
+const order: Record<IncidentSeverity, number> = { FATAL_STALL: 0, FRICTION_WARN: 1, CLEARED: 2 };
 
 export function Findings({ incidents }: { incidents: IncidentItem[] }) {
   const [filter, setFilter] = useState<'ALL' | IncidentSeverity>('ALL');
+  const [open, setOpen] = useState<string | null>(null);
   const count = (s: IncidentSeverity) => incidents.filter((i) => i.severity === s).length;
   const tabs: { key: 'ALL' | IncidentSeverity; label: string; n: number }[] = [
     { key: 'ALL', label: 'All', n: incidents.length },
@@ -22,16 +24,15 @@ export function Findings({ incidents }: { incidents: IncidentItem[] }) {
     { key: 'FRICTION_WARN', label: 'Worth fixing', n: count('FRICTION_WARN') },
     { key: 'CLEARED', label: 'Passed', n: count('CLEARED') },
   ];
-  const order: Record<IncidentSeverity, number> = { FATAL_STALL: 0, FRICTION_WARN: 1, CLEARED: 2 };
   const shown = incidents
     .filter((i) => filter === 'ALL' || i.severity === filter)
     .sort((a, b) => order[a.severity] - order[b.severity]);
 
   return (
-    <section className="mt-6 rounded-2xl border border-line bg-card" aria-label="Findings">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
-        <h2 className="text-lg font-semibold">What we found</h2>
-        <div className="flex flex-wrap gap-1.5">
+    <section className="mt-10" aria-labelledby="all-findings">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h2 id="all-findings" className="text-xl font-semibold tracking-tight">All checks</h2>
+        <div className="no-print flex flex-wrap gap-1.5" role="group" aria-label="Filter checks">
           {tabs.map((t) => (
             <button
               key={t.key}
@@ -46,28 +47,44 @@ export function Findings({ incidents }: { incidents: IncidentItem[] }) {
           ))}
         </div>
       </div>
-      <ul className="divide-y divide-line">
+
+      <ul className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-card">
         {shown.length === 0 && <li className="p-8 text-center text-muted">Nothing in this group.</li>}
-        {shown.map((inc) => (
-          <li key={inc.id} className="px-5 py-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CHIP[inc.severity]}`}>
-                {LABEL[inc.severity]}
-              </span>
-              <h3 className="text-[15px] font-semibold">{inc.headline}</h3>
-            </div>
-            <p className="mt-2 text-[15px] leading-relaxed text-muted">{inc.plainEnglishImpact}</p>
-            {inc.severity !== 'CLEARED' && (
-              <p className="mt-2 text-[15px] leading-relaxed">
-                <span className="font-semibold">What to do: </span>
-                {inc.actionableFix}
-              </p>
-            )}
-            {inc.researchCitation && (
-              <p className="mt-2 text-xs text-muted">Based on: {inc.researchCitation}</p>
-            )}
-          </li>
-        ))}
+        {shown.map((inc) => {
+          const isOpen = open === inc.id;
+          return (
+            <li key={inc.id}>
+              <button
+                onClick={() => setOpen(isOpen ? null : inc.id)}
+                aria-expanded={isOpen}
+                className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-paper/60"
+              >
+                <span aria-hidden className={`h-2.5 w-2.5 shrink-0 rounded-full ${DOT[inc.severity]}`} />
+                <span className="flex-1">
+                  <span className="block text-[15px] font-medium">{inc.headline}</span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    {LABEL[inc.severity]}
+                    {inc.confidence === 'unconfirmed' ? ' · Not fully confirmed' : ''}
+                  </span>
+                </span>
+                <span aria-hidden className={`text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`}>▾</span>
+              </button>
+              {(isOpen) && (
+                <div className="space-y-2.5 px-5 pb-5 pl-[2.6rem] text-[15px] leading-relaxed">
+                  <p className="text-muted">{inc.plainEnglishImpact}</p>
+                  {inc.severity !== 'CLEARED' && (
+                    <p><span className="font-semibold">What to do: </span>{inc.actionableFix}</p>
+                  )}
+                  {inc.confidence === 'unconfirmed' && (
+                    <p className="rounded-lg bg-paper px-3 py-2 text-sm text-muted">
+                      Blackbox reads the page code, not a live browser. Something built by scripts after the page loads can be missed, so check this one yourself before acting.
+                    </p>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

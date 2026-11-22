@@ -257,17 +257,17 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
   if (raw.hasPersistentNav) {
     archScore += 7;
   } else {
-    archScore += 2;
+    archScore += 5;
     incidents.push({
       id: 'nav-not-sticky',
       pillar: 'architecture',
       pillarName: 'Conversion Architecture',
       severity: 'FRICTION_WARN',
       researchCitation: 'NN/g Persistent CTA Research',
-      headline: 'Call-to-Action Disappears on Scroll',
-      plainEnglishImpact: 'As visitors scroll down to read your case studies, the booking button vanishes from sight, requiring them to scroll back up to take action.',
-      actionableFix: 'Make your header sticky so the action button remains accessible at every scroll depth.',
-      pointsDelta: -5,
+      headline: "We could not confirm the header stays visible when scrolling",
+      plainEnglishImpact: 'We only read the page code, and found no sign of a header that stays on screen. If it scrolls away, visitors have to go back to the top to act.',
+      actionableFix: 'Open your page and scroll. If the main button disappears, make the header sticky. If it stays, ignore this.',
+      pointsDelta: -2,
     });
   }
 
@@ -491,7 +491,7 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
       researchCitation: 'CXL Quantitative Proof Research',
       headline: 'Zero Measurable Results on Page',
       plainEnglishImpact: 'Could not find any numbers, percentages, or dollar metrics on the page. Making claims without measurable receipts creates skepticism.',
-      actionableFix: 'Add 3 bold statistics showcasing past client results or system benchmarks.',
+      actionableFix: 'Add real proof near the top: a result you can show, a named client, or a before-and-after. If you have no numbers yet, show real work instead, and never make figures up.',
       pointsDelta: -10,
     });
   }
