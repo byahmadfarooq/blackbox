@@ -1,85 +1,37 @@
 import React from 'react';
 import { PillarScore } from '@/lib/engine/types';
 
-interface PillarGridProps {
-  pillars: {
-    architecture: PillarScore;
-    messaging: PillarScore;
-    proof: PillarScore;
-    velocity: PillarScore;
-  };
+interface Props {
+  pillars: { architecture: PillarScore; messaging: PillarScore; proof: PillarScore; velocity: PillarScore };
 }
 
-export function PillarGrid({ pillars }: PillarGridProps) {
-  const items = [
-    { key: 'architecture', data: pillars.architecture },
-    { key: 'messaging', data: pillars.messaging },
-    { key: 'proof', data: pillars.proof },
-    { key: 'velocity', data: pillars.velocity },
-  ];
+const NAMES: Record<string, string> = {
+  architecture: 'Getting visitors to act',
+  messaging: 'Clear message',
+  proof: 'Proof and trust',
+  velocity: 'Speed and weight',
+};
 
-  const getStatusColor = (status: 'pass' | 'amber' | 'crit') => {
-    switch (status) {
-      case 'pass':
-        return 'text-[#00FF88]';
-      case 'amber':
-        return 'text-[#FFB700]';
-      case 'crit':
-        return 'text-[#FF4455]';
-    }
-  };
-
-  const getProgressBarColor = (status: 'pass' | 'amber' | 'crit') => {
-    switch (status) {
-      case 'pass':
-        return 'bg-[#00FF88]';
-      case 'amber':
-        return 'bg-[#FFB700]';
-      case 'crit':
-        return 'bg-[#FF4455]';
-    }
-  };
+export function PillarGrid({ pillars }: Props) {
+  const items = (Object.keys(NAMES) as (keyof Props['pillars'])[]).map((k) => ({ key: k, data: pillars[k] }));
+  const bar = (s: PillarScore['status']) => (s === 'pass' ? 'bg-good' : s === 'amber' ? 'bg-warn' : 'bg-bad');
+  const text = (s: PillarScore['status']) => (s === 'pass' ? 'text-good' : s === 'amber' ? 'text-warn' : 'text-bad');
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       {items.map(({ key, data }) => (
-        <div
-          key={key}
-          className="bg-[#0D0D12] border border-[#1C1C24] hover:border-[#2E2E38] transition-colors rounded-lg p-5 flex flex-col justify-between"
-        >
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <span className="font-mono text-[10px] tracking-wider uppercase text-[#71717A]">
-                {data.code}
-              </span>
-              <span className="font-mono text-xs text-[#A1A1AA]">
-                {data.score} / {data.maxScore} PTS
-              </span>
-            </div>
-
-            <h4 className="text-sm font-semibold text-[#E4E4E7] tracking-tight mb-2">
-              {data.name}
-            </h4>
-
-            <div className="flex items-baseline gap-2 mb-3">
-              <span className={`text-4xl font-extrabold tracking-tight ${getStatusColor(data.status)}`}>
-                {data.percentage}%
-              </span>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="w-full h-1.5 bg-[#16161D] rounded-full overflow-hidden mb-3">
-              <div
-                className={`h-full rounded-full transition-all duration-700 ${getProgressBarColor(data.status)}`}
-                style={{ width: `${data.percentage}%` }}
-              />
-            </div>
+        <section key={key} className="rounded-2xl border border-line bg-card p-5">
+          <div className="flex items-baseline justify-between gap-3">
+            <h3 className="text-[15px] font-semibold">{NAMES[key]}</h3>
+            <span className={`text-sm font-semibold tabular-nums ${text(data.status)}`}>
+              {data.score} / {data.maxScore}
+            </span>
           </div>
-
-          <p className="text-xs text-[#71717A] leading-relaxed">
-            {data.summary}
-          </p>
-        </div>
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-paper">
+            <div className={`h-full rounded-full ${bar(data.status)}`} style={{ width: `${data.percentage}%` }} />
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-muted">{data.summary}</p>
+        </section>
       ))}
     </div>
   );

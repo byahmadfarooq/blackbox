@@ -797,20 +797,20 @@ export function scoreTelemetry(raw: RawTelemetryMetrics): TelemetryResult {
 
   if (totalScore >= 90) {
     tier = 'TIER_S_OPTIMAL';
-    tierLabel = 'TIER S // OPTIMAL FLIGHT';
-    tierDescription = 'Pristine conversion architecture. Friction is near zero and your page is cleared for high-ticket traffic.';
+    tierLabel = 'Strong';
+    tierDescription = 'The page is clear, easy to act on and well backed up. Only small fixes are left.';
   } else if (totalScore >= 75) {
     tier = 'TIER_A_ELEVATED';
-    tierLabel = 'TIER A // MINOR TURBULENCE';
-    tierDescription = 'Solid foundation. A few addressable leaks in copy or asset loading are trimming your total booking rate.';
+    tierLabel = 'Good, with gaps';
+    tierDescription = 'A solid base. A few fixable issues in copy, proof or speed are making it harder for visitors to act.';
   } else if (totalScore >= 50) {
     tier = 'TIER_B_SEVERE_DRAG';
-    tierLabel = 'TIER B // SEVERE DRAG';
-    tierDescription = 'Significant friction detected. Your page is likely leaking an estimated 20% to 35% of prospective buyers before they convert.';
+    tierLabel = 'Needs work';
+    tierDescription = 'Several things are getting in the way of a visitor understanding the offer and taking the next step.';
   } else {
     tier = 'FATAL_CRASH';
-    tierLabel = 'FATAL CRASH // CRITICAL FAILURE';
-    tierDescription = 'Critical conversion stalls detected across layout, speed, and messaging. Immediate architecture rebuild required.';
+    tierLabel = 'Needs a rebuild';
+    tierDescription = 'Serious problems with layout, speed or messaging. Fix the top items below before sending traffic here.';
   }
 
   const architecturePillar: PillarScore = {

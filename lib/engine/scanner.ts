@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { ArchetypeCalibration, PageArchetype, RawTelemetryMetrics } from './types';
+import { safeFetchText } from './safe-fetch';
 import { calculateReadability, detectBuzzwords } from './research-metrics';
 
 export async function scanUrl(rawInputUrl: string, manualArchetype?: PageArchetype): Promise<RawTelemetryMetrics> {
@@ -13,18 +14,15 @@ export async function scanUrl(rawInputUrl: string, manualArchetype?: PageArchety
 
   const startTime = Date.now();
 
-  const response = await fetch(normalizedUrl, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 (Blackbox Telemetry Probe; +https://blackbox-kaivex.vercel.app)',
-      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    },
-    redirect: 'follow',
-    signal: AbortSignal.timeout(10000),
+  const page = await safeFetchText(normalizedUrl, {
+    timeoutMs: 10000,
+    accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
+    userAgent: 'Mozilla/5.0 (compatible; BlackboxScanner/1.0; +https://ahmadfarooq.vercel.app)',
   });
 
   const probeLatencyMs = Date.now() - startTime;
-  const html = await response.text();
+  const html = page.text;
+  const statusCodeFetched = page.status;
   const $ = cheerio.load(html);
 
   // Total DOM nodes count
@@ -157,8 +155,13 @@ export async function scanUrl(rawInputUrl: string, manualArchetype?: PageArchety
   for (const sheetHref of stylesheets) {
     try {
       const fullSheetUrl = new URL(sheetHref, parsedUrl.origin).toString();
-      const cssRes = await fetch(fullSheetUrl, { signal: AbortSignal.timeout(1200) });
-      const cssText = await cssRes.text();
+      const css = await safeFetchText(fullSheetUrl, {
+        timeoutMs: 1500,
+        accept: 'text/css,*/*;q=0.1',
+        userAgent: 'Mozilla/5.0 (compatible; BlackboxScanner/1.0; +https://ahmadfarooq.vercel.app)',
+        allowTypes: /text\/css|text\/plain/i,
+      });
+      const cssText = css.text;
       embeddedStyles += ' ' + cssText;
     } catch {
       // Non-critical stylesheet fetch timeout
@@ -421,7 +424,7 @@ export async function scanUrl(rawInputUrl: string, manualArchetype?: PageArchety
     targetUrl: normalizedUrl,
     domain,
     probeLatencyMs,
-    statusCode: response.status,
+    statusCode: statusCodeFetched,
     archetype: computedArchetype,
     archetypeCalibration,
     hasInteractiveTool,

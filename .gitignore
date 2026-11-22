@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local scratch
+/_to_delete/
+build-log.txt
+build-check.bat
+push-log.txt
+push-main.bat
+commit-msg.txt

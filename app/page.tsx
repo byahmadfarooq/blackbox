@@ -5,8 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { TelemetryGauge } from '@/components/TelemetryGauge';
 import { PillarGrid } from '@/components/PillarGrid';
-import { IncidentTerminal } from '@/components/IncidentTerminal';
-import { KaivexBanner } from '@/components/KaivexBanner';
+import { Findings } from '@/components/Findings';
 import { ShareBar } from '@/components/ShareBar';
 import { PageArchetype, TelemetryResult } from '@/lib/engine/types';
 
@@ -30,14 +29,11 @@ export default function Home() {
   const [report, setReport] = useState<TelemetryResult | null>(null);
 
   const loadingSequence = [
-    'CONNECTING TO TARGET HOST VIA HTTPS...',
-    'CAPTURING FULL-PAGE DOM & VIEWPORT NODES...',
-    'CLASSIFYING PAGE ARCHETYPE & CALIBRATION STANDARD...',
-    'AUDITING PRIMARY CTA DENSITY & NAV FRICTION...',
-    'EVALUATING HEADLINE SCANNABILITY & ICP HOOK...',
-    'CHECKING QUANTIFIED PROOFS & CLIENT ASSETS...',
-    'CALCULATING THIRD-PARTY SCRIPT LATENCY TAX...',
-    'FINALIZING FLIGHT TELEMETRY & INCIDENT MANIFEST...',
+    'Opening your page',
+    'Reading the headline and buttons',
+    'Looking for proof and trust signals',
+    'Checking how heavy the page is',
+    'Writing your report',
   ];
 
   const handleAutoScan = React.useCallback((targetUrl: string) => {
@@ -56,14 +52,14 @@ export default function Home() {
 
     const interval = setInterval(() => {
       setLoadingStep((prev) => (prev < loadingSequence.length - 1 ? prev + 1 : prev));
-    }, 450);
+    }, 900);
 
     return () => clearInterval(interval);
   }, [loading]);
 
   const executeScan = async (target: string, overrideArchetype?: PageArchetype) => {
     if (!target.trim()) {
-      setError('Please enter a website URL.');
+      setError('Please enter a website address.');
       return;
     }
 
@@ -105,283 +101,138 @@ export default function Home() {
     setUrlInput('');
   };
 
+  const archetypes = [
+    { key: 'AUTO', label: 'Detect automatically' },
+    { key: 'AGENCY_STUDIO', label: 'Agency or studio' },
+    { key: 'PERSONAL_AUTHORITY', label: 'Personal site' },
+    { key: 'B2B_SAAS_TOOL', label: 'Software product' },
+    { key: 'SINGLE_OFFER_FUNNEL', label: 'Single offer' },
+  ];
+
+  const steps = [
+    ['Getting visitors to act', 'Is the main button easy to find, and is the path to it short?'],
+    ['Clear message', 'Can a new visitor tell what you offer and who it is for within a few seconds?'],
+    ['Proof and trust', 'Are there real customers, results or work to back up the claims?'],
+    ['Speed and weight', 'Is the page light enough that visitors do not give up waiting?'],
+  ];
+
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
+    <div className="mx-auto w-full max-w-4xl px-5 sm:px-8">
       <Suspense fallback={null}>
         <UrlQueryListener onTargetUrl={handleAutoScan} />
       </Suspense>
 
       <Header onReset={resetFlightDeck} />
 
-      {/* SCREEN 1: THE FLIGHT DECK (HOMEPAGE / INPUT) */}
       {!report && !loading && (
-        <main className="py-12 sm:py-20 flex flex-col items-center text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-[#0E0E12] border border-[#27272A] px-3.5 py-1.5 rounded-full font-mono text-[11px] text-[#FF5500] tracking-widest uppercase mb-8 shadow-[0_0_15px_rgba(255,85,0,0.15)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FF5500] animate-ping" />
-            AUTONOMOUS CONVERSION TELEMETRY // ZERO AI FLUFF
-          </div>
-
-          {/* Headline */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-tight uppercase max-w-4xl leading-[1.08] mb-6">
-            WHAT WENT WRONG BEFORE THE LEAD BOUNCED?
+        <main className="pb-16 pt-10 sm:pt-16">
+          <h1 className="max-w-3xl text-4xl font-semibold leading-[1.1] tracking-tight sm:text-6xl">
+            Find what is stopping visitors from contacting you.
           </h1>
-
-          {/* Subtitle */}
-          <p className="text-sm sm:text-base text-[#A1A1AA] max-w-2xl leading-relaxed mb-10">
-            Instant, mathematical friction diagnostics for B2B landing pages. Calibrated specifically for Agency Hubs, Solo Builder Portfolios, B2B SaaS, and Single-Offer Funnels.
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
+            Paste the address of a B2B landing page. You get a plain-English report with the fixes ranked, so you know what to change first.
           </p>
 
-          {/* Archetype Selector */}
-          <div className="w-full max-w-2xl mb-4 flex flex-wrap items-center justify-center gap-1.5 font-mono text-[11px]">
-            <span className="text-[#52525B] mr-1">CALIBRATION:</span>
-            {[
-              { key: 'AUTO', label: 'AUTO-DETECT' },
-              { key: 'AGENCY_STUDIO', label: 'AGENCY & STUDIO' },
-              { key: 'PERSONAL_AUTHORITY', label: 'PERSONAL PORTFOLIO' },
-              { key: 'B2B_SAAS_TOOL', label: 'B2B SAAS / UTILITY' },
-              { key: 'SINGLE_OFFER_FUNNEL', label: 'SINGLE OFFER' },
-            ].map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => setSelectedArchetype(opt.key as 'AUTO' | PageArchetype)}
-                className={`px-2.5 py-1 rounded transition-colors ${
-                  selectedArchetype === opt.key
-                    ? 'bg-[#FF5500]/15 text-[#FF5500] border border-[#FF5500]/40 font-bold shadow-[0_0_12px_rgba(255,85,0,0.15)]'
-                    : 'bg-[#0E0E14] text-[#71717A] hover:text-[#D4D4D8] border border-[#27272A]'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Input Console */}
-          <form onSubmit={handleFormSubmit} className="w-full max-w-2xl mb-8">
-            <div className="relative flex flex-col sm:flex-row gap-2 bg-[#0A0A0E] border border-[#1C1C24] p-2 rounded-lg focus-within:border-[#FF5500] focus-within:shadow-[0_0_25px_rgba(255,85,0,0.2)] transition-all">
+          <form onSubmit={handleFormSubmit} className="mt-9 max-w-2xl">
+            <label htmlFor="url" className="mb-2 block text-sm font-medium">Website address</label>
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
+                id="url"
                 type="text"
+                inputMode="url"
+                autoComplete="url"
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
-                placeholder="Enter website URL (e.g. bigosoft.us or ahmadfarooq.vercel.app)"
-                className="flex-1 bg-transparent px-4 py-3.5 text-sm sm:text-base text-white placeholder-[#52525B] focus:outline-none font-mono"
+                placeholder="yourcompany.com"
+                className="min-h-12 flex-1 rounded-xl border border-line bg-card px-4 text-base placeholder:text-muted/70"
               />
               <button
                 type="submit"
-                className="bg-[#FF5500] hover:bg-[#FF6611] text-black font-extrabold text-xs sm:text-sm px-7 py-3.5 rounded tracking-wider uppercase transition-all shadow-[0_4px_16px_rgba(255,85,0,0.35)] shrink-0"
+                className="min-h-12 rounded-xl bg-ink px-6 text-base font-semibold text-paper transition-colors hover:bg-accent"
               >
-                [ INITIATE FLIGHT SCAN ]
+                Check my page
               </button>
             </div>
-            {error && (
-              <div className="mt-3 text-xs font-mono text-[#FF4455] text-left px-2">
-                [ERROR]: {error}
+            {error && <p role="alert" className="mt-3 text-sm text-bad">{error}</p>}
+
+            <fieldset className="mt-5">
+              <legend className="mb-2 text-sm text-muted">What kind of page is it?</legend>
+              <div className="flex flex-wrap gap-2">
+                {archetypes.map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    aria-pressed={selectedArchetype === opt.key}
+                    onClick={() => setSelectedArchetype(opt.key as 'AUTO' | PageArchetype)}
+                    className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
+                      selectedArchetype === opt.key
+                        ? 'border-ink bg-ink text-paper'
+                        : 'border-line bg-card text-muted hover:border-ink hover:text-ink'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
-            )}
+            </fieldset>
           </form>
 
-          {/* Quick Presets */}
-          <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-mono text-[#71717A] mb-8">
-            <span className="text-[#52525B]">TEST TELEMETRY ON:</span>
-            {[
-              { label: 'stripe.com', url: 'stripe.com', type: 'B2B_SAAS_TOOL' as PageArchetype },
-              { label: 'ahmadfarooq.vercel.app', url: 'ahmadfarooq.vercel.app', type: 'PERSONAL_AUTHORITY' as PageArchetype },
-              { label: 'bigosoft.us', url: 'bigosoft.us', type: 'AGENCY_STUDIO' as PageArchetype },
-            ].map((preset) => (
-              <button
-                key={preset.label}
-                type="button"
-                onClick={() => {
-                  setUrlInput(preset.url);
-                  setSelectedArchetype(preset.type);
-                  executeScan(preset.url, preset.type);
-                }}
-                className="bg-[#0E0E14] hover:bg-[#181822] text-[#D4D4D8] hover:text-white border border-[#27272A] px-2.5 py-1 rounded transition-colors"
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Hard Quantified Telemetry Proof Chips */}
-          <div className="w-full max-w-2xl grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8 font-mono text-center">
-            <div className="bg-[#09090D] border border-[#1C1C24] p-3 rounded-lg">
-              <div className="text-base font-black text-white">40,000+</div>
-              <div className="text-[10px] text-[#71717A] uppercase tracking-wider mt-0.5">Pages Tested</div>
+          <section className="mt-16" aria-labelledby="how">
+            <h2 id="how" className="text-xl font-semibold">What it checks</h2>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {steps.map(([t, d], i) => (
+                <div key={t} className="rounded-2xl border border-line bg-card p-5">
+                  <p className="text-sm text-accent">{i + 1}</p>
+                  <h3 className="mt-1 text-[15px] font-semibold">{t}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted">{d}</p>
+                </div>
+              ))}
             </div>
-            <div className="bg-[#09090D] border border-[#1C1C24] p-3 rounded-lg">
-              <div className="text-base font-black text-[#00FF88]">100%</div>
-              <div className="text-[10px] text-[#71717A] uppercase tracking-wider mt-0.5">Deterministic</div>
-            </div>
-            <div className="bg-[#09090D] border border-[#1C1C24] p-3 rounded-lg">
-              <div className="text-base font-black text-white">3.5s</div>
-              <div className="text-[10px] text-[#71717A] uppercase tracking-wider mt-0.5">Scan Speed</div>
-            </div>
-            <div className="bg-[#09090D] border border-[#1C1C24] p-3 rounded-lg">
-              <div className="text-base font-black text-[#FF5500]">+34%</div>
-              <div className="text-[10px] text-[#71717A] uppercase tracking-wider mt-0.5">Average Lift</div>
-            </div>
-          </div>
-
-          {/* Social Proof Testimonial Quote */}
-          <blockquote className="w-full max-w-2xl bg-[#09090D] border border-[#1C1C24] rounded-lg p-5 mb-8 text-left">
-            <p className="text-sm text-[#D4D4D8] italic leading-relaxed mb-3">
-              &ldquo;Blackbox caught three critical drop-off points in our signup funnel within five minutes. We simplified our copy and saw our demo requests jump by 42% in two weeks.&rdquo;
+            <p className="mt-6 max-w-2xl text-sm leading-relaxed text-muted">
+              Blackbox reads the page's code the way a search engine would. The same page always gets the same score, and no AI writes your report. It cannot see
+              what only appears after the page runs scripts, so treat the result as a strong first pass, not a verdict.
             </p>
-            <footer className="text-xs font-mono text-[#71717A] flex items-center justify-between">
-              <div>
-                <strong className="text-white">Marcus Vance</strong>, Head of Growth at Relay Systems
-              </div>
-              <span className="text-[#00FF88] text-[10px] bg-[#00FF88]/10 border border-[#00FF88]/30 px-2 py-0.5 rounded font-semibold">
-                VERIFIED AUDIT
-              </span>
-            </footer>
-          </blockquote>
-
-          {/* Pillar Explanations (Conversational Copy at Grade 7-8) */}
-          <div className="w-full max-w-2xl mb-12 text-left">
-            <h2 className="text-xs font-bold font-mono tracking-wider text-[#A1A1AA] uppercase mb-4 text-center">
-              HOW BLACKBOX AUDITS YOUR LANDING PAGE
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="bg-[#09090D] border border-[#1C1C24] p-4 rounded-lg">
-                <div className="font-bold text-[#FF5500] font-mono mb-1">01. CONVERSION ARCHITECTURE</div>
-                <p className="text-[#A1A1AA] leading-relaxed">
-                  We check if your main button is easy to find. We make sure your forms are simple and quick to complete.
-                </p>
-              </div>
-              <div className="bg-[#09090D] border border-[#1C1C24] p-4 rounded-lg">
-                <div className="font-bold text-[#FF5500] font-mono mb-1">02. MESSAGING CLARITY</div>
-                <p className="text-[#A1A1AA] leading-relaxed">
-                  We test your headline and body copy. We verify that new visitors can understand your core offer in seconds.
-                </p>
-              </div>
-              <div className="bg-[#09090D] border border-[#1C1C24] p-4 rounded-lg">
-                <div className="font-bold text-[#FF5500] font-mono mb-1">03. PROOF DENSITY</div>
-                <p className="text-[#A1A1AA] leading-relaxed">
-                  We scan for real reviews, customer quotes, and hard numbers. Clear proof builds instant trust with buyers.
-                </p>
-              </div>
-              <div className="bg-[#09090D] border border-[#1C1C24] p-4 rounded-lg">
-                <div className="font-bold text-[#FF5500] font-mono mb-1">04. TECHNICAL VELOCITY</div>
-                <p className="text-[#A1A1AA] leading-relaxed">
-                  We make sure heavy tracking scripts do not slow down your site. Fast pages keep cold visitors engaged.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Live Telemetry Ticker */}
-          <div className="w-full border-t border-[#1C1C22] pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 font-mono text-[11px] text-[#52525B]">
-            <div>RECENT TELEMETRY SCANS:</div>
-            <div className="flex flex-wrap gap-4 text-[#71717A]">
-              <span>STRIPE.COM <strong className="text-[#00FF88]">91% CLEARED (SAAS)</strong></span>
-              <span>•</span>
-              <span>AHMADFAROOQ.VERCEL.APP <strong className="text-[#00FF88]">91% OPTIMAL (BUILDER)</strong></span>
-              <span>•</span>
-              <span>BIGOSOFT.US <strong className="text-[#FFB700]">75% VERIFIED (AGENCY)</strong></span>
-            </div>
-          </div>
+          </section>
         </main>
       )}
 
-      {/* SCREEN 2: SCANNING HUD (LOADING STATE) */}
       {loading && (
-        <div className="py-20 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 relative flex items-center justify-center mb-8">
-            <div className="absolute inset-0 border-2 border-[#161620] border-t-[#FF5500] rounded-full animate-spin" />
-            <div className="w-2 h-2 rounded-full bg-[#FF5500] shadow-[0_0_12px_#FF5500]" />
-          </div>
-
-          <div className="font-mono text-xs text-[#FF5500] tracking-widest uppercase mb-3">
-            BLACKBOX TELEMETRY PROBE ACTIVE
-          </div>
-
-          <div className="bg-[#09090D] border border-[#1C1C24] p-6 rounded-lg font-mono text-xs max-w-lg w-full text-left space-y-2 shadow-2xl">
-            {loadingSequence.slice(0, loadingStep + 1).map((step, idx) => (
-              <div
-                key={idx}
-                className={`flex items-center gap-3 ${
-                  idx === loadingStep ? 'text-[#FF5500] font-bold' : 'text-[#71717A]'
+        <div className="py-24" role="status" aria-live="polite">
+          <p className="text-2xl font-semibold tracking-tight">Checking your page</p>
+          <ul className="mt-6 space-y-2.5">
+            {loadingSequence.map((step, idx) => (
+              <li
+                key={step}
+                className={`flex items-center gap-3 text-[15px] ${
+                  idx < loadingStep ? 'text-muted' : idx === loadingStep ? 'font-medium text-ink' : 'text-muted/40'
                 }`}
               >
-                <span className="text-[#52525B]">&gt;</span>
-                <span>{step}</span>
-                {idx < loadingStep && <span className="text-[#00FF88] ml-auto">[OK]</span>}
-              </div>
+                <span aria-hidden className={`h-2 w-2 rounded-full ${idx <= loadingStep ? 'bg-accent' : 'bg-line'}`} />
+                {step}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
 
-      {/* SCREEN 3: FLIGHT INCIDENT REPORT (THE CORE PRODUCT) */}
       {report && (
-        <main className="py-4 animate-in fade-in duration-500">
-          {/* Top Telemetry Strip */}
-          <div className="bg-[#0A0A0E] border border-[#1C1C22] rounded-lg p-3 sm:p-4 grid grid-cols-2 md:grid-cols-4 gap-3 font-mono text-xs mb-4">
+        <main className="pb-16 pt-4">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <span className="text-[#52525B]">TARGET: </span>
-              <span className="text-white font-semibold">{report.domain}</span>
-            </div>
-            <div>
-              <span className="text-[#52525B]">LATENCY: </span>
-              <span className="text-[#A1A1AA]">{report.probeLatencyMs}ms</span>
-            </div>
-            <div>
-              <span className="text-[#52525B]">STATUS: </span>
-              <span className="text-[#00FF88]">INCIDENT_LOG_GENERATED</span>
-            </div>
-            <div className="text-right">
-              <button
-                onClick={resetFlightDeck}
-                className="text-[#FF5500] hover:text-[#FF6611] underline tracking-wider uppercase"
-              >
-                [ SCAN ANOTHER DOMAIN ]
-              </button>
-            </div>
-          </div>
-
-          {/* Archetype Calibration Seal */}
-          <div className="bg-[#09090D] border border-[#1F1F28] rounded-lg p-4 mb-6 font-mono text-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#00FF88] animate-pulse" />
-                <span className="text-[#00FF88] font-bold tracking-wider uppercase text-[11px]">
-                  CALIBRATION: {report.archetypeCalibration.label}
-                </span>
-                {report.archetypeCalibration.isManualOverride && (
-                  <span className="bg-[#FF5500]/15 text-[#FF5500] text-[9.5px] px-2 py-0.5 rounded border border-[#FF5500]/30 font-semibold">
-                    MANUAL OVERRIDE
-                  </span>
-                )}
-              </div>
-              <p className="text-[#A1A1AA] text-xs max-w-2xl leading-relaxed">
-                {report.archetypeCalibration.description}
+              <p className="text-sm text-muted">Report for</p>
+              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{report.domain}</h1>
+              <p className="mt-1 text-sm text-muted">
+                Read as: {report.archetypeCalibration.label}
+                {report.archetypeCalibration.isManualOverride ? ' (you chose this)' : ''}
               </p>
-              <div className="text-[10.5px] text-[#52525B]">
-                BENCHMARK STANDARD: {report.archetypeCalibration.benchmarkStandard}
-              </div>
             </div>
-
-            {report.archetypeCalibration.detectedSignals.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 shrink-0 max-w-xs justify-start md:justify-end">
-                {report.archetypeCalibration.detectedSignals.map((sig, idx) => (
-                  <span
-                    key={idx}
-                    className="bg-[#14141C] text-[#D4D4D8] border border-[#272734] px-2 py-0.5 rounded text-[10px]"
-                  >
-                    {sig}
-                  </span>
-                ))}
-              </div>
-            )}
+            <button onClick={resetFlightDeck} className="rounded-full border border-line bg-card px-4 py-2 text-sm font-medium hover:border-ink">
+              Check another page
+            </button>
           </div>
 
-          {/* Main Dashboard Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left: Gauge Centerpiece (5 cols) */}
-            <div className="lg:col-span-5">
+          <div className="grid items-start gap-6 lg:grid-cols-5">
+            <div className="lg:col-span-2">
               <TelemetryGauge
                 score={report.overallScore}
                 tier={report.tier}
@@ -389,29 +240,31 @@ export default function Home() {
                 tierDescription={report.tierDescription}
               />
             </div>
-
-            {/* Right: 4 Tactical Pillars (7 cols) */}
-            <div className="lg:col-span-7">
+            <div className="lg:col-span-3">
               <PillarGrid pillars={report.pillars} />
             </div>
           </div>
 
-          {/* Incident Terminal */}
-          <IncidentTerminal incidents={report.incidents} />
-
-          {/* Share and Export Bar */}
+          <Findings incidents={report.incidents} />
           <ShareBar report={report} />
 
-          {/* Subtle Kaivex Systems Diagnostic Note */}
-          <KaivexBanner score={report.overallScore} />
+          <section className="mt-6 rounded-2xl border border-line bg-card p-5 sm:p-6">
+            <h2 className="text-lg font-semibold">Want a second pair of eyes?</h2>
+            <p className="mt-1 text-[15px] leading-relaxed text-muted">
+              I build and fix websites for small businesses. If you want help acting on this report, send me a message.
+            </p>
+            <a
+              href="https://ahmadfarooq.vercel.app"
+              className="mt-4 inline-block rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-paper hover:bg-accent"
+            >
+              Talk to Ahmad
+            </a>
+          </section>
         </main>
       )}
 
-      {/* Footer */}
-      <footer className="mt-16 pt-6 border-t border-[#1C1C20] flex flex-col sm:flex-row justify-between items-center gap-3 font-mono text-[11px] text-[#52525B]">
-        <div>BLACKBOX TELEMETRY ENGINE // BUILT BY KAIVEX SYSTEMS</div>
-        <div>100% DETERMINISTIC HEURISTICS // ZERO AI TOKENS SPENT</div>
-        <div>HOSTED AT BLACKBOX-KAIVEX.VERCEL.APP</div>
+      <footer className="border-t border-line py-8 text-sm text-muted">
+        <p>Blackbox is a free tool by <a className="underline underline-offset-2 hover:text-ink" href="https://ahmadfarooq.vercel.app">Ahmad Farooq</a>. Pages are fetched once to produce the report and are not stored.</p>
       </footer>
     </div>
   );
