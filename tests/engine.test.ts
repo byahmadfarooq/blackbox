@@ -71,3 +71,17 @@ test('every check has text and a weight, and pillar totals match', () => {
   assert.equal(sum('speed'), 14);
   assert.equal(sum('basics'), 14);
 });
+
+test('animated headlines split into word spans still count their words', () => {
+  const html = '<html><body><h1><span>Websites</span><span>that</span><span>look</span><span>right.</span> <span>Systems</span><span>that</span><span>do</span><span>the</span><span>work.</span></h1><p>' + 'word '.repeat(80) + '</p></body></html>';
+  const facts = analyze(html, meta(html.length, 'gzip'));
+  assert.equal(facts.h1Texts[0].split(' ').length, 9);
+});
+
+test('"Book 20 minutes with me" and "Message me" count as primary actions', () => {
+  const html = '<html><body><header><a class="btn" href="/c">Book 20 minutes with me</a></header><h1>Hello there friend</h1><p>' + 'word '.repeat(80) + '</p><a class="btn" href="mailto:a@b.co">Message me</a></body></html>';
+  const facts = analyze(html, meta(html.length, 'gzip'));
+  const texts = facts.actions.map((a) => a.text);
+  assert.ok(texts.includes('Book 20 minutes with me'));
+  assert.ok(texts.includes('Message me'));
+});

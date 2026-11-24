@@ -74,7 +74,7 @@ export interface PageFacts {
 const clean = (s?: string) => (s || '').replace(/\s+/g, ' ').trim();
 
 const STRONG_ACTION =
-  /\b(book (a |your |my |an? )?(free |quick |short )?(\d+[- ]?min\w* )?(call|demo|meeting|consult\w*|strategy|audit|intro|chat)|schedule (a |your |an? )?\w*\s?(call|demo|meeting|consult\w*)|get (a |your |my )?(free )?(quote|estimate|audit|demo|proposal|started|in touch|review)|request (a |your )?(free )?(quote|demo|proposal|audit|call|review)|start (a |your |my )?(free )?(trial|project|now|today)|try (it )?(for )?free|sign up|talk to (us|sales|an? \w+)|contact( us| me| sales)?|(message|email|call|text|dm) (us|me)\b|reach out|send (us|me) an? (message|email)|say (hi|hello)|let'?s (talk|chat|work)|work with (us|me)|hire (us|me)|free (audit|review|scan|consult\w*|trial|quote|check)|check (my|your) \w+|scan (my|your) \w+|get in touch|join (the )?(waitlist|now)|apply (now|today)?)\b/i;
+  /\b(book (a |your |my |an? )?(free |quick |short )?(\d+[- ]?min\w* )?(call|demo|meeting|consult\w*|strategy|audit|intro|chat)|schedule (a |your |an? )?\w*\s?(call|demo|meeting|consult\w*)|get (a |your |my )?(free )?(quote|estimate|audit|demo|proposal|started|in touch|review)|request (a |your )?(free )?(quote|demo|proposal|audit|call|review)|start (a |your |my )?(free )?(trial|project|now|today)|try (it )?(for )?free|sign up|talk to (us|sales|an? \w+)|contact( us| me| sales)?|book (\d+ )?(minutes?|mins?|time|a time|a slot|now)( with (me|us))?|book (me|us)\b|(message|email|call|text|dm) (us|me)\b|reach out|send (us|me) an? (message|email)|say (hi|hello)|let'?s (talk|chat|work)|work with (us|me)|hire (us|me)|free (audit|review|scan|consult\w*|trial|quote|check)|check (my|your) \w+|scan (my|your) \w+|get in touch|join (the )?(waitlist|now)|apply (now|today)?)\b/i;
 
 const GENERIC_ACTION = /^(submit|learn more|read more|click here|more|go|send|continue|see more|find out more)$/i;
 
@@ -85,7 +85,10 @@ const RESULT_CONTEXT =
   /(revenue|growth|grew|increase[ds]?|conversion|leads?|roi|saved|reduc\w+|clients?|customers?|users?|projects?|years?|booked|pipeline|traffic|sales|faster|more|orders?|calls?|downloads?|rating|retention|uptime|delivered|launched|shipped)/i;
 
 export function analyze(html: string, meta: FetchMeta): PageFacts {
-  const $ = cheerio.load(html);
+  // Animated headlines wrap each word in its own element with no space between. Add a space after closing tags
+  // so "<span>Websites</span><span>that</span>" reads as two words, not one.
+  const spaced = html.replace(/<\/(span|a|b|i|em|strong|mark|small|div|p|li|h[1-6]|button|label)>/gi, '</$1> ');
+  const $ = cheerio.load(spaced);
   const hostOf = (u: string) => {
     try {
       return new URL(u).hostname.replace(/^www\./, '');
