@@ -27,3 +27,6 @@ On Windows machines where the native SWC binary fails, build with `npx next buil
 - Rescan and compare over time
 - Shorter links through a small database
 - Optional PageSpeed API key for real speed data
+
+## Lead capture
+The scan form asks for an email, business type and consent. Leads are POSTed as JSON to `LEADS_WEBHOOK_URL` (for example a Google Apps Script web app that appends a row to a Sheet). If it is not set, leads are written to the Vercel function logs only. Fields: email, businessType, domain, score, archetype, at.

@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { Reveal } from '@/components/Reveal';
 import { ScanDemo } from '@/components/ScanDemo';
 import { PageArchetype } from '@/lib/engine/types';
+import { BUSINESS_TYPES, EMAIL_RE } from '@/lib/leads';
 
 const STEPS = [
   'Opening your page',
@@ -33,13 +34,13 @@ const AREAS = [
 ];
 
 const STEPS_HOW = [
-  ['Paste your address', 'Any public landing page. No sign-up, no email.'],
+  ['Paste your address', 'Any public landing page. Add your email and business type, no account needed.'],
   ['We read the page', 'Around 30 fixed checks, each one tied to something we can actually find in the page.'],
   ['You get a ranked report', 'The biggest fixes first, with what we found, why it matters and how many points it could add.'],
 ];
 
 const FAQ = [
-  ['Is it free?', 'Yes. There is no sign-up and no email to enter.'],
+  ['Is it free?', 'Yes. You enter your email and business type, and the report is free. There is no account to create.'],
   ['Do you keep my page?', 'No. The page is read once to build the report. The report lives inside its own link, so only people with the link can open it.'],
   ['Is the score from an AI?', 'No. The same page always gets the same score. Every check is a fixed rule, and the report shows what each one found.'],
   ['What can it miss?', 'It reads the page code, not a live browser. Things that only appear after scripts run can be missed. Those checks are marked "not confirmed" and left out of the score instead of counted as failures.'],
@@ -58,6 +59,10 @@ function QueryListener({ onUrl }: { onUrl: (u: string) => void }) {
 export default function Home() {
   const router = useRouter();
   const [urlInput, setUrlInput] = useState('');
+  const [email, setEmail] = useState('');
+  const [bizType, setBizType] = useState('');
+  const [consent, setConsent] = useState(false);
+  const [trap, setTrap] = useState('');
   const [kind, setKind] = useState<'AUTO' | PageArchetype>('AUTO');
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
@@ -78,6 +83,9 @@ export default function Home() {
         setError('Please enter a website address.');
         return;
       }
+      if (!EMAIL_RE.test(email.trim())) { setError('Please enter a valid email address.'); return; }
+      if (!bizType) { setError('Please choose your type of business.'); return; }
+      if (!consent) { setError('Please tick the box to receive your report.'); return; }
       setError(null);
       setLoading(true);
       try {
@@ -85,7 +93,7 @@ export default function Home() {
         const res = await fetch('/api/scan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: target, manualArchetype: k === 'AUTO' ? undefined : k }),
+          body: JSON.stringify({ url: target, manualArchetype: k === 'AUTO' ? undefined : k, email: email.trim(), businessType: bizType, consent, website: trap }),
         });
         const data = await res.json();
         if (!data.success) throw new Error(data.error || 'The check failed. Please try again.');
@@ -95,26 +103,45 @@ export default function Home() {
         setLoading(false);
       }
     },
-    [kind, router]
+    [kind, router, email, bizType, consent, trap]
   );
 
   const onUrl = useCallback(
     (u: string) => {
       setUrlInput(u);
-      run(u);
     },
-    [run]
+    []
   );
 
 
   const scanForm = (id: string) => (
-    <form onSubmit={(e) => { e.preventDefault(); run(urlInput); }} className="max-w-xl">
+    <form onSubmit={(e) => { e.preventDefault(); run(urlInput); }} className="relative max-w-xl">
       <label htmlFor={id} className="mb-2 block text-sm font-medium">Website address</label>
       <div className="flex flex-col gap-2 rounded-2xl border border-line bg-card p-2 shadow-sm transition-shadow focus-within:shadow-md focus-within:ring-2 focus-within:ring-accent/30 sm:flex-row">
         <input id={id} type="text" inputMode="url" autoComplete="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)}
           placeholder="yourcompany.com" className="min-h-12 flex-1 rounded-xl bg-transparent px-3 text-base placeholder:text-muted/70 focus-visible:outline-none" />
         <button type="submit" className="btn-primary min-h-12 rounded-xl px-6 text-base font-semibold">Check my page</button>
       </div>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <div>
+          <label htmlFor={`${id}-email`} className="mb-1.5 block text-sm font-medium">Your email</label>
+          <input id={`${id}-email`} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com"
+            className="min-h-11 w-full rounded-xl border border-line bg-card px-3 text-base placeholder:text-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30" />
+        </div>
+        <div>
+          <label htmlFor={`${id}-biz`} className="mb-1.5 block text-sm font-medium">Your business</label>
+          <select id={`${id}-biz`} value={bizType} onChange={(e) => setBizType(e.target.value)}
+            className="min-h-11 w-full rounded-xl border border-line bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30">
+            <option value="">Choose one</option>
+            {BUSINESS_TYPES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+          </select>
+        </div>
+      </div>
+      <input type="text" name="website" value={trap} onChange={(e) => setTrap(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] h-0 w-0 opacity-0" />
+      <label className="mt-3 flex items-start gap-2.5 text-sm text-muted">
+        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#c2410c]" />
+        <span>Send me my report and occasional tips on improving my page. I can unsubscribe any time. <a href="/privacy" className="underline underline-offset-2 hover:text-ink">Privacy</a></span>
+      </label>
       {error && <p role="alert" className="mt-3 text-sm text-bad">{error}</p>}
       <fieldset className="mt-4">
         <legend className="mb-2 text-sm text-muted">What kind of page is it?</legend>
@@ -157,7 +184,7 @@ export default function Home() {
           <section className="grid items-center gap-12 pb-16 pt-8 sm:pt-14 lg:grid-cols-2">
             <div>
               <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-line bg-card px-3 py-1 text-sm text-muted">
-                <span className="pulse-dot h-2 w-2 rounded-full bg-accent" aria-hidden /> Free · no sign-up · about 10 seconds
+                <span className="pulse-dot h-2 w-2 rounded-full bg-accent" aria-hidden /> Free · no account · about 10 seconds
               </p>
               <h1 className="text-4xl font-semibold leading-[1.06] tracking-tight sm:text-6xl">
                 Find what is stopping visitors from <span className="text-accent">contacting you</span>.

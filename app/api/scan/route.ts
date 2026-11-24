@@ -3,6 +3,8 @@ import { scanUrl } from '@/lib/engine/engine';
 import { UnsafeUrlError, assertPublicUrl } from '@/lib/engine/safe-fetch';
 import { rateLimit } from '@/lib/rate-limit';
 import { encodeReport } from '@/lib/share';
+import { saveLead, BUSINESS_KEYS, EMAIL_RE } from '@/lib/leads';
+import { hydrate } from '@/lib/engine/engine';
 
 const ARCHETYPES = ['AGENCY_STUDIO', 'PERSONAL_AUTHORITY', 'B2B_SAAS_TOOL', 'SINGLE_OFFER_FUNNEL'] as const;
 
@@ -18,7 +20,20 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { url, manualArchetype } = body ?? {};
+    const { url, manualArchetype, email, businessType, consent, website } = body ?? {};
+
+    // Hidden field that only bots fill in: pretend success so they learn nothing.
+    if (website) return NextResponse.json({ success: false, error: 'Please try again.' }, { status: 400 });
+
+    if (typeof email !== 'string' || email.length > 320 || !EMAIL_RE.test(email.trim())) {
+      return NextResponse.json({ success: false, error: 'Please enter a valid email address.' }, { status: 400 });
+    }
+    if (!BUSINESS_KEYS.includes(businessType)) {
+      return NextResponse.json({ success: false, error: 'Please choose your type of business.' }, { status: 400 });
+    }
+    if (consent !== true) {
+      return NextResponse.json({ success: false, error: 'Please tick the box to receive your report by agreeing to be emailed.' }, { status: 400 });
+    }
 
     if (!url || typeof url !== 'string' || url.length > 2048) {
       return NextResponse.json({ success: false, error: 'Please enter a valid website address.' }, { status: 400 });
@@ -31,6 +46,9 @@ export async function POST(req: NextRequest) {
 
     await assertPublicUrl(cleanUrl);
     const stored = await scanUrl(cleanUrl, archetype);
+
+    const r = hydrate(stored);
+    await saveLead({ email: email.trim().toLowerCase(), businessType, domain: r.domain, score: r.score, archetype: r.archetypeLabel, at: new Date().toISOString() });
 
     return NextResponse.json({ success: true, token: encodeReport(stored) });
   } catch (error: unknown) {
