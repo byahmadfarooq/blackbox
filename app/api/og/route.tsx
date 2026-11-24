@@ -1,6 +1,8 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
 import { decodeReport } from '@/lib/share';
+import { hydrate } from '@/lib/engine/engine';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -12,15 +14,19 @@ const LINE = '#e4e2da';
 const tone = (n: number) => (n >= 75 ? '#2f7d4f' : n >= 50 ? '#a86a0c' : '#b42318');
 
 const PILLARS = [
-  ['architecture', 'Getting visitors to act'],
-  ['messaging', 'Clear message'],
+  ['action', 'Getting visitors to act'],
+  ['message', 'Clear message'],
   ['proof', 'Proof and trust'],
-  ['velocity', 'Speed and weight'],
+  ['speed', 'Speed and weight'],
+  ['basics', 'Search and basics'],
 ] as const;
 
 export async function GET(req: NextRequest) {
   const sp = new URL(req.url).searchParams;
-  const report = decodeReport(sp.get('t') || '');
+  const ip = (req.headers.get('x-forwarded-for') || 'anon').split(',')[0].trim();
+  if (!rateLimit(`og:${ip}`, 60, 10 * 60 * 1000).ok) return new Response('Too many requests', { status: 429 });
+  const stored = decodeReport(sp.get('t') || '');
+  const report = stored ? hydrate(stored) : null;
   const square = sp.get('size') === 'square';
   const width = 1200;
   const height = square ? 1200 : 630;
@@ -51,8 +57,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const score = report.overallScore;
-  const top = report.incidents.find((i) => i.severity === 'FATAL_STALL') || report.incidents.find((i) => i.severity === 'FRICTION_WARN');
+  const score = report.score;
+  const top = report.priorities[0];
 
   return new ImageResponse(
     (
@@ -75,10 +81,10 @@ export async function GET(req: NextRequest) {
             {PILLARS.map(([k, label]) => {
               const p = report.pillars[k];
               return (
-                <div key={k} style={{ display: 'flex', flexDirection: 'column', marginBottom: 20 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 26 }}>
+                <div key={k} style={{ display: 'flex', flexDirection: 'column', marginBottom: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 24 }}>
                     <div style={{ display: 'flex' }}>{label}</div>
-                    <div style={{ display: 'flex', color: MUTED }}>{p.score} / {p.maxScore}</div>
+                    <div style={{ display: 'flex', color: MUTED }}>{p.score} / {p.max}</div>
                   </div>
                   <div style={{ display: 'flex', width: '100%', height: 12, background: LINE, borderRadius: 6, marginTop: 8 }}>
                     <div style={{ display: 'flex', width: `${p.percentage}%`, height: 12, background: tone(p.percentage), borderRadius: 6 }} />
@@ -92,7 +98,7 @@ export async function GET(req: NextRequest) {
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {top && (
             <div style={{ display: 'flex', fontSize: 28, marginBottom: 14 }}>
-              Top fix: {top.headline.slice(0, 70)}
+              Top fix: {top.title.slice(0, 70)}
             </div>
           )}
           <div style={{ display: 'flex', fontSize: 22, color: MUTED }}>Free check at blackboxcheck.vercel.app. By Ahmad Farooq.</div>

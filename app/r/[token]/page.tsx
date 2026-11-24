@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { decodeReport } from '@/lib/share';
+import { hydrate } from '@/lib/engine/engine';
 import { ReportView } from '@/components/ReportView';
 import { Header } from '@/components/Header';
 
@@ -8,9 +9,10 @@ type Props = { params: Promise<{ token: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
-  const report = decodeReport(token);
+  const stored = decodeReport(token);
+  const report = stored ? hydrate(stored) : null;
   if (!report) return { title: 'Report not found | Blackbox', robots: { index: false } };
-  const title = `${report.domain} scored ${report.overallScore}/100 | Blackbox`;
+  const title = `${report.domain} scored ${report.score}/100 | Blackbox`;
   const description = `Landing page check for ${report.domain}: ${report.tierLabel}. See what to fix first.`;
   return {
     title,
@@ -23,7 +25,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ReportPage({ params }: Props) {
   const { token } = await params;
-  const report = decodeReport(token);
+  const stored = decodeReport(token);
+  const report = stored ? hydrate(stored) : null;
 
   return (
     <div className="mx-auto w-full max-w-5xl px-5 sm:px-8">
@@ -34,7 +37,7 @@ export default async function ReportPage({ params }: Props) {
         <main className="py-24">
           <h1 className="text-3xl font-semibold tracking-tight">We could not open this report</h1>
           <p className="mt-3 max-w-xl text-muted">The link may be cut off or edited. Run the check again to get a fresh report.</p>
-          <Link href="/" className="mt-6 inline-block rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-paper hover:bg-accent">Check a page</Link>
+          <Link href="/" className="mt-6 inline-block btn-primary rounded-full px-5 py-2.5 text-sm font-semibold">Check a page</Link>
         </main>
       )}
     </div>

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { scanUrl } from '@/lib/engine/scanner';
-import { scoreTelemetry } from '@/lib/engine/scorer';
+import { scanUrl } from '@/lib/engine/engine';
 import { UnsafeUrlError, assertPublicUrl } from '@/lib/engine/safe-fetch';
 import { rateLimit } from '@/lib/rate-limit';
-import { finalizeResult, toShared } from '@/lib/engine/report';
 import { encodeReport } from '@/lib/share';
 
 const ARCHETYPES = ['AGENCY_STUDIO', 'PERSONAL_AUTHORITY', 'B2B_SAAS_TOOL', 'SINGLE_OFFER_FUNNEL'] as const;
@@ -32,15 +30,17 @@ export async function POST(req: NextRequest) {
     const archetype = ARCHETYPES.includes(manualArchetype) ? manualArchetype : undefined;
 
     await assertPublicUrl(cleanUrl);
-    const rawMetrics = await scanUrl(cleanUrl, archetype);
-    const result = finalizeResult(scoreTelemetry(rawMetrics));
+    const stored = await scanUrl(cleanUrl, archetype);
 
-    return NextResponse.json({ success: true, token: encodeReport(toShared(result)) });
+    return NextResponse.json({ success: true, token: encodeReport(stored) });
   } catch (error: unknown) {
     if (error instanceof UnsafeUrlError) {
       return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     }
     console.error('Scan error:', error);
+    if (error instanceof Error && /^The page returned an error \(\d+\)\.$/.test(error.message)) {
+      return NextResponse.json({ success: false, error: `${error.message} Check that the page is public and loads in a browser.` }, { status: 502 });
+    }
     return NextResponse.json(
       { success: false, error: 'We could not load that page. Check the address is public and try again.' },
       { status: 502 }

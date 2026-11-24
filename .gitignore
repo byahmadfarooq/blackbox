@@ -47,3 +47,5 @@ build-check.bat
 push-log.txt
 push-main.bat
 commit-msg.txt
+run-tests.sh
+_to_delete/

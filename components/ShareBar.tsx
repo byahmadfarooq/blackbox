@@ -1,9 +1,9 @@
 'use client';
 import React, { useState } from 'react';
-import { SharedReport } from '@/lib/engine/types';
+import { ReportData } from '@/lib/engine/types';
 
-export function ShareBar({ report, token }: { report: SharedReport; token: string }) {
-  const { domain, overallScore: score, tierLabel, incidents, pillars } = report;
+export function ShareBar({ report, token }: { report: ReportData; token: string }) {
+  const { domain, score, tierLabel, priorities, pillars } = report;
   const [notice, setNotice] = useState<string | null>(null);
   const [badgeOpen, setBadgeOpen] = useState(false);
   const [format, setFormat] = useState<'html' | 'markdown'>('html');
@@ -14,25 +14,19 @@ export function ShareBar({ report, token }: { report: SharedReport; token: strin
   const badgeUrl = `${origin}/api/badge?score=${score}`;
   const canNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
-  const top = incidents
-    .filter((i) => i.severity === 'FATAL_STALL')
-    .concat(incidents.filter((i) => i.severity === 'FRICTION_WARN'))
-    .slice(0, 3);
+  const top = priorities.slice(0, 3);
 
   const postText = `I ran ${domain} through Blackbox, a free landing page check. It scored ${score}/100 (${tierLabel}).${
-    top[0] ? ` Top fix: ${top[0].headline}.` : ''
+    top[0] ? ` Top fix: ${top[0].title}.` : ''
   }`;
 
   const summary = [
     `Blackbox check for ${domain}: ${score}/100 (${tierLabel}).`,
     ``,
-    `Getting visitors to act: ${pillars.architecture.score}/${pillars.architecture.maxScore}`,
-    `Clear message: ${pillars.messaging.score}/${pillars.messaging.maxScore}`,
-    `Proof and trust: ${pillars.proof.score}/${pillars.proof.maxScore}`,
-    `Speed and weight: ${pillars.velocity.score}/${pillars.velocity.maxScore}`,
+    ...(['action', 'message', 'proof', 'speed', 'basics'] as const).map((k) => `${pillars[k].name}: ${pillars[k].coverage === 0 ? 'not checked' : `${pillars[k].score}/${pillars[k].max}`}`),
     ``,
     top.length ? `Top fixes:` : `No blocking issues found.`,
-    ...top.map((t, i) => `${i + 1}. ${t.headline}: ${t.actionableFix}`),
+    ...top.map((t, i) => `${i + 1}. ${t.title}: ${t.fix}`),
     ``,
     shareUrl,
   ].join('\n');
@@ -53,19 +47,6 @@ export function ShareBar({ report, token }: { report: SharedReport; token: strin
     } catch {
       /* user closed the share sheet */
     }
-  };
-
-  const savePdf = () => {
-    // The browser uses the page title as the PDF file name, so set a clean one while printing.
-    const original = document.title;
-    const day = new Date(report.timestamp).toISOString().slice(0, 10);
-    document.title = `Blackbox Report - ${domain} - ${day}`;
-    const restore = () => {
-      document.title = original;
-      window.removeEventListener('afterprint', restore);
-    };
-    window.addEventListener('afterprint', restore);
-    window.print();
   };
 
   const snippet =
@@ -105,7 +86,7 @@ export function ShareBar({ report, token }: { report: SharedReport; token: strin
           </div>
           <div className="flex flex-wrap gap-2">
             <button className={btn} onClick={() => copy(summary, 'Summary copied.')}>Copy summary</button>
-            <button className={btn} onClick={savePdf}>Save as PDF</button>
+            <a className={primary} href={`/api/pdf?t=${token}`} download>Download PDF report</a>
             <button className={btn} onClick={() => setBadgeOpen((v) => !v)} aria-expanded={badgeOpen}>Badge</button>
           </div>
           <p className="min-h-5 text-sm text-good" role="status">{notice}</p>
