@@ -74,7 +74,7 @@ export interface PageFacts {
 const clean = (s?: string) => (s || '').replace(/\s+/g, ' ').trim();
 
 const STRONG_ACTION =
-  /\b(book (a |your |my |an? )?(free |quick |short )?(\d+[- ]?min\w* )?(call|demo|meeting|consult\w*|strategy|audit|intro|chat)|schedule (a |your |an? )?\w*\s?(call|demo|meeting|consult\w*)|get (a |your |my )?(free )?(quote|estimate|audit|demo|proposal|started|in touch|review)|request (a |your )?(free )?(quote|demo|proposal|audit|call|review)|start (a |your |my )?(free )?(trial|project|now|today)|try (it )?(for )?free|sign up|talk to (us|sales|an? \w+)|contact( us| me| sales)?|let'?s (talk|chat|work)|work with (us|me)|hire (us|me)|free (audit|review|scan|consult\w*|trial|quote|check)|check (my|your) \w+|scan (my|your) \w+|get in touch|join (the )?(waitlist|now)|apply (now|today)?)\b/i;
+  /\b(book (a |your |my |an? )?(free |quick |short )?(\d+[- ]?min\w* )?(call|demo|meeting|consult\w*|strategy|audit|intro|chat)|schedule (a |your |an? )?\w*\s?(call|demo|meeting|consult\w*)|get (a |your |my )?(free )?(quote|estimate|audit|demo|proposal|started|in touch|review)|request (a |your )?(free )?(quote|demo|proposal|audit|call|review)|start (a |your |my )?(free )?(trial|project|now|today)|try (it )?(for )?free|sign up|talk to (us|sales|an? \w+)|contact( us| me| sales)?|(message|email|call|text|dm) (us|me)\b|reach out|send (us|me) an? (message|email)|say (hi|hello)|let'?s (talk|chat|work)|work with (us|me)|hire (us|me)|free (audit|review|scan|consult\w*|trial|quote|check)|check (my|your) \w+|scan (my|your) \w+|get in touch|join (the )?(waitlist|now)|apply (now|today)?)\b/i;
 
 const GENERIC_ACTION = /^(submit|learn more|read more|click here|more|go|send|continue|see more|find out more)$/i;
 
