@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { CountUp } from './CountUp';
 
-export const toneColor = (pct: number) => (pct >= 75 ? 'var(--color-good)' : pct >= 50 ? 'var(--color-warn)' : 'var(--color-bad)');
+import { toneColor } from '@/lib/tone';
 
 export function ScoreRing({ score, size = 190 }: { score: number; size?: number }) {
   const [on, setOn] = useState(false);

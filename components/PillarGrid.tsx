@@ -1,7 +1,7 @@
 import React from 'react';
 import { PillarScore, PillarKey } from '@/lib/engine/types';
 import { Reveal } from './Reveal';
-import { toneColor } from './ScoreRing';
+import { toneColor } from '@/lib/tone';
 
 const ORDER: PillarKey[] = ['action', 'message', 'proof', 'speed', 'basics'];
 
