@@ -51,7 +51,7 @@ export function ShareBar({ report, token }: { report: ReportData; token: string 
 
   const snippet =
     format === 'html'
-      ? `<a href="${shareUrl}"><img src="${badgeUrl}" alt="Blackbox score ${score}/100" height="28"></a>`
+      ? `<a href="${shareUrl}"><img src="${badgeUrl}" alt="Blackbox score ${score}/100" width="196" height="28"></a>`
       : `[![Blackbox score ${score}/100](${badgeUrl})](${shareUrl})`;
 
   const enc = encodeURIComponent;
@@ -96,7 +96,7 @@ export function ShareBar({ report, token }: { report: ReportData; token: string 
       {badgeOpen && (
         <div className="mt-2 rounded-2xl border border-line bg-card p-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/api/badge?score=${score}`} alt={`Blackbox score ${score}`} height={28} className="mb-3" />
+          <img src={`/api/badge?score=${score}`} alt={`Blackbox score ${score}`} width={196} height={28} className="mb-3" />
           <div className="mb-2 flex gap-2 text-sm" role="group" aria-label="Badge format">
             {(['html', 'markdown'] as const).map((f) => (
               <button key={f} onClick={() => setFormat(f)} aria-pressed={format === f}
